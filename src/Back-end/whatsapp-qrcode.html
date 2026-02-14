@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conectar WhatsApp - Partners App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1777CF 0%, #021632 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #1777CF;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #7D8592;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .qr-container {
+            background: #F4F4F4;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .qr-code {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+        .steps {
+            text-align: left;
+            background: #F8FAFC;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        .step:last-child {
+            margin-bottom: 0;
+        }
+        .step-number {
+            background: #1777CF;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            margin-right: 12px;
+            flex-shrink: 0;
+            font-size: 14px;
+        }
+        .step-text {
+            color: #3A3F51;
+            line-height: 1.5;
+            padding-top: 3px;
+        }
+        .status {
+            background: #DCFCE7;
+            color: #22C55E;
+            padding: 12px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .warning {
+            background: #FEF3C7;
+            color: #D97706;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Conectar WhatsApp</h1>
+        <p class="subtitle">Partners App - Integracao Evolution API</p>
+
+        <div class="qr-container">
+            <img class="qr-code" src="data:image/png;base64,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 Jg6ixthMYXFSWcxhcWNzuIkLKawOOksHrCYOos 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" alt="QR Code WhatsApp">
+        </div>
+
+        <div class="steps">
+            <div class="step">
+                <span class="step-number">1</span>
+                <span class="step-text">Abra o <strong>WhatsApp</strong> no seu celular</span>
+            </div>
+            <div class="step">
+                <span class="step-number">2</span>
+                <span class="step-text">Va em <strong>Configuracoes - Aparelhos conectados</strong></span>
+            </div>
+            <div class="step">
+                <span class="step-number">3</span>
+                <span class="step-text">Toque em <strong>"Conectar um aparelho"</strong></span>
+            </div>
+            <div class="step">
+                <span class="step-number">4</span>
+                <span class="step-text">Escaneie o <strong>QR Code</strong> acima</span>
+            </div>
+        </div>
+
+        <div class="status">Evolution API funcionando!</div>
+
+        <div class="warning">
+            O QR Code expira em 30 segundos. Se expirar, atualize esta pagina.
+        </div>
+    </div>
+</body>
+</html>

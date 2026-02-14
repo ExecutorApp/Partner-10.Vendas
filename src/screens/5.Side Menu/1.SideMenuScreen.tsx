@@ -101,6 +101,15 @@ const CompromissosIcon: React.FC<{ color?: string }> = ({ color = INACTIVE_COLOR
   </Svg>
 );
 
+const ComercialIcon: React.FC<{ color?: string }> = ({ color = INACTIVE_COLOR }) => (
+  <Svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"
+      fill={color}
+    />
+  </Svg>
+);
+
 const SairIcon = () => (
   <Svg width="19" height="15" viewBox="0 0 19 15" fill="none">
     <Path d="M18.4434 7.75665L12.209 13.991C11.6523 14.5477 10.6875 14.158 10.6875 13.3602V9.79766H5.64062C5.14707 9.79766 4.75 9.40059 4.75 8.90704V5.34454C4.75 4.85098 5.14707 4.45391 5.64062 4.45391H10.6875V0.891414C10.6875 0.0972737 11.6486 -0.296086 12.209 0.260555L18.4434 6.49493C18.7885 6.84376 18.7885 7.40782 18.4434 7.75665ZM7.125 13.8055V12.3211C7.125 12.0762 6.92461 11.8758 6.67969 11.8758H3.5625C2.90566 11.8758 2.375 11.3451 2.375 10.6883V3.56329C2.375 2.90645 2.90566 2.37579 3.5625 2.37579H6.67969C6.92461 2.37579 7.125 2.1754 7.125 1.93048V0.446102C7.125 0.20118 6.92461 0.000789264 6.67969 0.000789264H3.5625C1.5957 0.000789264 0 1.59649 0 3.56329V10.6883C0 12.6551 1.5957 14.2508 3.5625 14.2508H6.67969C6.92461 14.2508 7.125 14.0504 7.125 13.8055Z" fill="#1777CF"/>
@@ -174,6 +183,7 @@ const SideMenuScreen: React.FC<SideMenuScreenProps> = ({ isVisible, onClose }) =
   const menuItems = [
     { icon: <DashboardIcon />, title: 'Dashboard', color: '#91929E' },
     { icon: <CompromissosIcon />, title: 'Compromissos', color: '#91929E' },
+    { icon: <ComercialIcon />, title: 'Comercial', color: '#91929E' },
     { icon: <ProdutosIcon />, title: 'Produtos', color: '#91929E' },
     { icon: <KeymansIcon />, title: 'Keymans', color: '#7D8592' },
     { icon: <ClientesIcon />, title: 'Clientes', color: '#1777CF' },
@@ -263,6 +273,10 @@ const SideMenuScreen: React.FC<SideMenuScreenProps> = ({ isVisible, onClose }) =
                   }
                   if (item.title === 'Treinamentos') {
                     navigation.navigate(ScreenNames.TrainingHome);
+                    onClose();
+                  }
+                  if (item.title === 'Comercial') {
+                    navigation.navigate(ScreenNames.CommercialHome);
                     onClose();
                   }
                 }}

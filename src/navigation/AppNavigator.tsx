@@ -32,6 +32,18 @@ import TrainingHomeScreen from '../screens/14.Training/01.Training-HomeScreen';
 import TrainingDetailScreen from '../screens/14.Training/05.Training-DetailScreen';
 import ProductDetailScreen from '../screens/14.Training/06.Training-ProductDetailScreen';
 import TrainingPlayerScreen from '../screens/14.Training/07.Training-PlayerScreen';
+import CommercialScreen from '../screens/15.Commercial/00.CommercialScreen';
+import LeadLolaSwipeContainer from '../screens/15.Commercial/components/Chat/10.00.LeadLolaSwipeContainer';
+import CameraScreen from '../screens/15.Commercial/components/Chat/camera/CameraScreen';
+import PhotoPreviewScreen from '../screens/15.Commercial/components/Chat/camera/PhotoPreviewScreen';
+import PhotoEditScreen from '../screens/15.Commercial/components/Chat/camera/PhotoEditScreen';
+import VideoPreviewScreen from '../screens/15.Commercial/components/Chat/camera/VideoPreviewScreen';
+import VideoTrimScreen from '../screens/15.Commercial/components/Chat/camera/VideoTrimScreen';
+import VideoNoteRecordScreen from '../screens/15.Commercial/components/Chat/camera/VideoNoteRecordScreen';
+import VideoNotePreviewScreen from '../screens/15.Commercial/components/Chat/camera/VideoNotePreviewScreen';
+import GallerySelectScreen from '../screens/15.Commercial/components/Chat/camera/GallerySelectScreen';
+import MultiPreviewScreen from '../screens/15.Commercial/components/Chat/camera/MultiPreviewScreen';
+import { cameraTransitionOptions, previewTransitionOptions, fadeTransitionOptions } from '../screens/15.Commercial/components/Chat/camera/utils/cameraAnimations';
 
 // ========================================
 // REFERENCIA DE NAVEGACAO GLOBAL
@@ -459,6 +471,106 @@ export const AppNavigator: React.FC = () => {
         >
           {() => <TrainingPlayerScreen />}
         </Stack.Screen>
+        <Stack.Screen
+          name={ScreenNames.CommercialHome}
+          options={{
+            headerShown: false,
+            animationTypeForReplace: 'push',
+          }}
+        >
+          {() => <CommercialScreen />}
+        </Stack.Screen>
+        {/* Rota Chat com Lead + Lola (Swipe) */}
+        <Stack.Screen
+          name={ScreenNames.LeadChatScreen}
+          options={{
+            headerShown: false,
+            animationTypeForReplace: 'push',
+          }}
+        >
+          {() => <LeadLolaSwipeContainer />}
+        </Stack.Screen>
+        {/* Rota Camera */}
+        <Stack.Screen
+          name={ScreenNames.CameraScreen}
+          component={CameraScreen}
+          options={{
+            headerShown: false,
+            ...cameraTransitionOptions,
+          }}
+        />
+        {/* Rota Preview da Foto */}
+        <Stack.Screen
+          name={ScreenNames.PhotoPreviewScreen}
+          component={PhotoPreviewScreen}
+          options={{
+            headerShown: false,
+            ...previewTransitionOptions,
+          }}
+        />
+        {/* Rota Edicao da Foto */}
+        <Stack.Screen
+          name={ScreenNames.PhotoEditScreen}
+          component={PhotoEditScreen}
+          options={{
+            headerShown: false,
+            ...fadeTransitionOptions,
+          }}
+        />
+        {/* Rota Preview do Video */}
+        <Stack.Screen
+          name={ScreenNames.VideoPreviewScreen}
+          component={VideoPreviewScreen}
+          options={{
+            headerShown: false,
+            ...previewTransitionOptions,
+          }}
+        />
+        {/* Rota Trim do Video */}
+        <Stack.Screen
+          name={ScreenNames.VideoTrimScreen}
+          component={VideoTrimScreen}
+          options={{
+            headerShown: false,
+            ...fadeTransitionOptions,
+          }}
+        />
+        {/* Rota Gravacao de Video Note */}
+        <Stack.Screen
+          name={ScreenNames.VideoNoteRecordScreen}
+          component={VideoNoteRecordScreen}
+          options={{
+            headerShown: false,
+            ...cameraTransitionOptions,
+          }}
+        />
+        {/* Rota Preview de Video Note */}
+        <Stack.Screen
+          name={ScreenNames.VideoNotePreviewScreen}
+          component={VideoNotePreviewScreen}
+          options={{
+            headerShown: false,
+            ...previewTransitionOptions,
+          }}
+        />
+        {/* Rota Selecao de Galeria */}
+        <Stack.Screen
+          name={ScreenNames.GallerySelectScreen}
+          component={GallerySelectScreen}
+          options={{
+            headerShown: false,
+            ...cameraTransitionOptions,
+          }}
+        />
+        {/* Rota Preview Multiplo */}
+        <Stack.Screen
+          name={ScreenNames.MultiPreviewScreen}
+          component={MultiPreviewScreen}
+          options={{
+            headerShown: false,
+            ...previewTransitionOptions,
+          }}
+        />
         <Stack.Screen
           name={ScreenNames.CompanySelection}
           component={() => null} // Placeholder para próxima tela

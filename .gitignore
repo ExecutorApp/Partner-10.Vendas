@@ -24,3 +24,6 @@ Thumbs.db
 
 # Arquivos de video grandes
 public/*.mp4
+# Ignorar arquivos de ambiente com secrets
+src/Back-end/commercial-ai-api/.env
+src/Back-end/evolution-api/

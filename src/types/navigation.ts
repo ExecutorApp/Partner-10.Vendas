@@ -90,6 +90,96 @@ export type RootStackParamList = {
   TrainingDetail: { trainingId: string };
   ProductDetail: { productId: string };
   TrainingPlayer: { trainingId: string; lessonIndex?: number };
+  CommercialHome: undefined;
+  LeadChatScreen: {
+    leadId: string;
+    leadName: string;
+    leadPhone: string;
+    leadPhoto?: string;
+    pendingPhoto?: {
+      uri: string;
+      width: number;
+      height: number;
+      caption?: string;
+      viewOnce?: boolean;
+    };
+    pendingVideo?: {
+      uri: string;
+      duration: number;
+      caption?: string;
+    };
+    pendingVideoNote?: {
+      uri: string;
+      duration: number;
+    };
+  };
+  CameraScreen: {
+    leadId: string;
+    leadName: string;
+    leadPhone: string;
+    leadPhoto?: string;
+  };
+  PhotoPreviewScreen: {
+    photoUri: string;
+    photoWidth: number;
+    photoHeight: number;
+    leadName: string;
+    leadId: string;
+    leadPhone: string;
+  };
+  PhotoEditScreen: {
+    photoUri: string;
+    photoWidth: number;
+    photoHeight: number;
+    leadName: string;
+    leadId: string;
+    leadPhone: string;
+  };
+  VideoPreviewScreen: {
+    videoUri: string;
+    duration: number;
+    leadName: string;
+    leadId: string;
+    leadPhone: string;
+  };
+  VideoTrimScreen: {
+    videoUri: string;
+    duration: number;
+    leadName: string;
+    leadId: string;
+    leadPhone: string;
+  };
+  VideoNoteRecordScreen: {
+    leadId: string;
+    leadName: string;
+    leadPhone: string;
+  };
+  VideoNotePreviewScreen: {
+    videoUri: string;
+    duration: number;
+    leadName: string;
+    leadId: string;
+    leadPhone: string;
+  };
+  GallerySelectScreen: {
+    leadId: string;
+    leadName: string;
+    leadPhone: string;
+    mediaType?: 'photo' | 'video' | 'all';
+  };
+  MultiPreviewScreen: {
+    assets: {
+      id: string;
+      uri: string;
+      width: number;
+      height: number;
+      mediaType: 'photo' | 'video';
+      duration?: number;
+    }[];
+    leadId: string;
+    leadName: string;
+    leadPhone: string;
+  };
 };
 
 export const ScreenNames = {
@@ -134,6 +224,17 @@ export const ScreenNames = {
   TrainingDetail: 'TrainingDetail' as const,
   ProductDetail: 'ProductDetail' as const,
   TrainingPlayer: 'TrainingPlayer' as const,
+  CommercialHome: 'CommercialHome' as const,
+  LeadChatScreen: 'LeadChatScreen' as const,
+  CameraScreen: 'CameraScreen' as const,
+  PhotoPreviewScreen: 'PhotoPreviewScreen' as const,
+  PhotoEditScreen: 'PhotoEditScreen' as const,
+  VideoPreviewScreen: 'VideoPreviewScreen' as const,
+  VideoTrimScreen: 'VideoTrimScreen' as const,
+  VideoNoteRecordScreen: 'VideoNoteRecordScreen' as const,
+  VideoNotePreviewScreen: 'VideoNotePreviewScreen' as const,
+  GallerySelectScreen: 'GallerySelectScreen' as const,
+  MultiPreviewScreen: 'MultiPreviewScreen' as const,
 } as const;
 
 export type ScreenNamesType = keyof RootStackParamList;

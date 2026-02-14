@@ -1,0 +1,135 @@
+# ========================================
+# Docker Compose - Evolution API + Backend
+# WhatsApp Integration Stack
+# ========================================
+
+version: '3.8'
+
+services:
+  # ========================================
+  # Evolution API - WhatsApp Gateway
+  # ========================================
+  evolution-api:
+    container_name: evolution-api
+    image: atendai/evolution-api:v1.8.0
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      # Configuracao do Servidor
+      - SERVER_URL=http://localhost:8080
+      - SERVER_TYPE=http
+      - SERVER_PORT=8080
+
+      # Autenticacao
+      - AUTHENTICATION_TYPE=apikey
+      - AUTHENTICATION_API_KEY=Partners2026SecretKey
+      - AUTHENTICATION_EXPOSE_IN_FETCH_INSTANCES=true
+
+      # Configuracao de Instancias
+      - CONFIG_SESSION_PHONE_CLIENT=Partners App
+      - CONFIG_SESSION_PHONE_NAME=Chrome
+      - QRCODE_LIMIT=30
+      - QRCODE_COLOR=#1777CF
+
+      # Logs
+      - LOG_LEVEL=ERROR
+      - LOG_COLOR=true
+      - LOG_BAILEYS=error
+
+      # Armazenamento Local (v1.8.0 usa arquivo)
+      - STORE_MESSAGES=true
+      - STORE_MESSAGE_UP=true
+      - STORE_CONTACTS=true
+      - STORE_CHATS=true
+
+      # Limpeza automatica
+      - CLEAN_STORE_CLEANING_INTERVAL=7200
+      - CLEAN_STORE_MESSAGES=true
+      - CLEAN_STORE_MESSAGE_UP=true
+      - CLEAN_STORE_CONTACTS=true
+      - CLEAN_STORE_CHATS=true
+
+      # CORS
+      - CORS_ORIGIN=*
+      - CORS_METHODS=POST,GET,PUT,DELETE
+      - CORS_CREDENTIALS=true
+
+      # Instancias temporarias
+      - DEL_TEMP_INSTANCES=false
+
+      # Webhook Global (opcional)
+      - WEBHOOK_GLOBAL_ENABLED=false
+      - WEBHOOK_GLOBAL_URL=http://host.docker.internal:3001/api/evolution/webhook
+      - WEBHOOK_GLOBAL_WEBHOOK_BY_EVENTS=true
+
+      # RabbitMQ (desabilitado)
+      - RABBITMQ_ENABLED=false
+
+      # Websocket
+      - WEBSOCKET_ENABLED=true
+
+      # Chatwoot (desabilitado)
+      - CHATWOOT_ENABLED=false
+
+    volumes:
+      - evolution_instances:/evolution/instances
+      - evolution_store:/evolution/store
+    networks:
+      - partners-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # ========================================
+  # PostgreSQL - Database
+  # ========================================
+  postgres:
+    container_name: evolution-postgres
+    image: postgres:15-alpine
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=evolution
+      - POSTGRES_PASSWORD=evolution123
+      - POSTGRES_DB=evolution
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - partners-network
+
+  # ========================================
+  # Redis (Cache - Opcional mas recomendado)
+  # ========================================
+  redis:
+    container_name: evolution-redis
+    image: redis:7-alpine
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - partners-network
+    command: redis-server --appendonly yes
+
+# ========================================
+# Volumes Persistentes
+# ========================================
+volumes:
+  evolution_instances:
+    name: evolution_instances
+  evolution_store:
+    name: evolution_store
+  redis_data:
+    name: evolution_redis
+  postgres_data:
+    name: evolution_postgres
+
+# ========================================
+# Rede
+# ========================================
+networks:
+  partners-network:
+    name: partners-network
+    driver: bridge

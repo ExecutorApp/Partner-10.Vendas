@@ -179,7 +179,13 @@ const GlobalMiniPlayer: React.FC = () => {
     if (!isActive) {
       console.log('[DEBUG_VIDEO_STYLE] isActive = false -> display: none');
       // Oculta video quando nao ativo
-      return { display: 'none' };
+      // Inclui position: static para evitar elemento fixed residual
+      return {
+        display: 'none',
+        position: 'static' as any,
+        width: 0,
+        height: 0,
+      };
     }
 
     const { width: miniWidth, height: miniHeight } = getMiniPlayerDimensions();
