@@ -9,4 +9,10 @@ const config = getDefaultConfig(__dirname);
 config.watchFolders = [__dirname];
 config.resolver.nodeModulesPaths = [path.resolve(__dirname, 'node_modules')];
 
+// Forca o async-require para o node_modules deste projeto (evita resolver de projetos vizinhos)
+config.transformer = {
+  ...config.transformer,
+  asyncRequireModulePath: path.resolve(__dirname, 'node_modules', '@expo', 'metro-config', 'build', 'async-require'),
+};
+
 module.exports = config;
