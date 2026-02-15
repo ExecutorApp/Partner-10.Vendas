@@ -16,7 +16,7 @@ export const Colors = {
   // Estados
   hover: '#1777CF', // Opacidade 80% será aplicada via StyleSheet
   active: '#1777CF',
-  border: '#D8E0F0',
+  border: '#D8E0F0', 
   
   // Cores específicas do Figma
   logoText: '#111B31',
