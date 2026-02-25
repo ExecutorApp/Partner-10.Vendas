@@ -2,7 +2,10 @@
 import { useState, useCallback } from 'react';
 
 // Tipos e dados
-import { TransferMethod, PixKeyType, NewAccountFormData, SavedBankAccount, INITIAL_NEW_ACCOUNT, MIN_WITHDRAW_AMOUNT, MOCK_SAVED_ACCOUNTS, BRAZIL_BANKS, formatCurrencyInput, validatePixKey, validateDocument } from './11.WithdrawData';
+import { TransferMethod, PixKeyType, NewAccountFormData, SavedBankAccount, INITIAL_NEW_ACCOUNT, MIN_WITHDRAW_AMOUNT, BRAZIL_BANKS, formatCurrencyInput, validatePixKey, validateDocument } from './11.WithdrawData';
+
+// Contexto compartilhado de contas
+import { useSharedAccounts } from './34.SharedAccountsContext';
 
 // Hook de gerenciamento do formulario de resgate
 // Encapsula valor, conta destino, validacoes e formulario de nova conta
@@ -11,8 +14,8 @@ const useWithdrawForm = (availableBalance: number) => {
   const [rawInput, setRawInput] = useState(''); //..Input bruto do usuario
   const [amount, setAmount] = useState(0); //..........Valor em reais
 
-  // Estado da lista de contas salvas
-  const [savedAccounts, setSavedAccounts] = useState<SavedBankAccount[]>([]); //..Contas salvas (vazio inicial)
+  // Contas salvas compartilhadas entre telas
+  const { savedAccounts, addAccount, updateAccount: contextUpdateAccount, deleteAccount: contextDeleteAccount } = useSharedAccounts();
 
   // Estado da conta destino
   const defaultAccount = savedAccounts.find(a => a.isDefault); //..Conta padrao
@@ -64,7 +67,7 @@ const useWithdrawForm = (availableBalance: number) => {
     // Monta nova conta salva
     const newAccount: SavedBankAccount = {
       id: newId, //..Identificador unico
-      bankName: bankInfo?.name || 'Banco', //..Nome do banco
+      bankName: bankInfo?.name || (newAccountData.pixKey ? 'Pix' : 'Banco'), //..Nome do banco ou Pix
       bankCode: newAccountData.bankCode, //......Codigo do banco
       holderName: '', //...........................Titular vazio
       agency: newAccountData.agency, //............Agencia
@@ -74,29 +77,17 @@ const useWithdrawForm = (availableBalance: number) => {
       isDefault: newAccountData.isDefault, //.......Conta principal
     };
 
-    // Adiciona dados Pix se metodo for Pix
-    if (transferMethod === 'pix') {
-      newAccount.pixKeyType = newAccountData.pixKeyType; //..Tipo chave Pix
-      newAccount.pixKey = newAccountData.pixKey; //..........Valor chave Pix
-      newAccount.bankName = newAccountData.nickname || 'Conta Pix'; //..Nome ou apelido
-    }
+    // Adiciona dados Pix (sempre, pois ambas as abas sao obrigatorias)
+    newAccount.pixKeyType = newAccountData.pixKeyType; //..Tipo chave Pix
+    newAccount.pixKey = newAccountData.pixKey; //..........Valor chave Pix
 
-    // Usa apelido como nome se informado
+    // Usa apelido como nome se informado (sobrescreve nome do banco)
     if (newAccountData.nickname) {
       newAccount.bankName = newAccountData.nickname; //..Apelido da conta
     }
 
-    // Atualiza lista de contas
-    setSavedAccounts(prev => {
-      let updated = [...prev]; //..Copia lista
-
-      // Se nova conta e padrao, desmarca as outras
-      if (newAccount.isDefault) {
-        updated = updated.map(a => ({ ...a, isDefault: false })); //..Desmarca todas
-      }
-
-      return [...updated, newAccount]; //..Adiciona nova conta
-    });
+    // Adiciona ao contexto compartilhado
+    addAccount(newAccount);
 
     // Seleciona nova conta e fecha formulario
     setSelectedAccountId(newId); //..............Seleciona nova
@@ -105,13 +96,20 @@ const useWithdrawForm = (availableBalance: number) => {
     setTransferMethod('pix'); //................Reseta metodo
 
     return newId; //..Retorna ID da nova conta
-  }, [newAccountData, transferMethod]);
+  }, [newAccountData, addAccount]);
+
+  // Handler de atualizar conta existente
+  // Delega ao contexto compartilhado
+  const handleUpdateAccount = useCallback((id: string, updatedData: NewAccountFormData) => {
+    contextUpdateAccount(id, updatedData);
+  }, [contextUpdateAccount]);
 
   // Handler de excluir conta salva
+  // Delega ao contexto compartilhado
   const handleDeleteAccount = useCallback((id: string) => {
-    setSavedAccounts(prev => prev.filter(a => a.id !== id)); //..Remove conta
+    contextDeleteAccount(id);
     if (selectedAccountId === id) setSelectedAccountId(null); //..Desmarca se era a selecionada
-  }, [selectedAccountId]);
+  }, [selectedAccountId, contextDeleteAccount]);
 
   // Erro de validacao do valor
   const valueError = amount > 0 && amount < MIN_WITHDRAW_AMOUNT
@@ -120,21 +118,19 @@ const useWithdrawForm = (availableBalance: number) => {
       ? 'aboveBalance' as const
       : null; //..Sem erro
 
-  // Validacao do formulario de nova conta via Pix
-  const isPixFormValid = transferMethod === 'pix'
-    && newAccountData.pixKey.length > 3
+  // Validacao da aba Pix (sempre obrigatoria)
+  const isPixFormValid = newAccountData.pixKey.length > 3
     && !validatePixKey(newAccountData.pixKey, newAccountData.pixKeyType); //..Pix preenchido e valido
 
-  // Validacao do formulario de nova conta via transferencia
-  const isTransferFormValid = transferMethod === 'transfer'
-    && newAccountData.bankCode !== ''
+  // Validacao da aba Transferencia (sempre obrigatoria)
+  const isTransferFormValid = newAccountData.bankCode !== ''
     && newAccountData.agency.length >= 3
     && newAccountData.account.length >= 4
     && newAccountData.document.length >= 11
     && !validateDocument(newAccountData.document); //..Campos preenchidos e validos
 
-  // Nova conta valida
-  const isNewAccountValid = showNewForm && (isPixFormValid || isTransferFormValid); //..Formulario ok
+  // Nova conta valida (ambas as abas devem estar preenchidas)
+  const isNewAccountValid = showNewForm && isPixFormValid && isTransferFormValid; //..Formulario ok
 
   // Formulario completo valido
   const isFormValid = amount >= MIN_WITHDRAW_AMOUNT
@@ -156,6 +152,7 @@ const useWithdrawForm = (availableBalance: number) => {
     newAccountData,
     handleNewAccountChange,
     handleConfirmNewAccount,
+    handleUpdateAccount,
     handleDeleteAccount,
     valueError,
     isFormValid,

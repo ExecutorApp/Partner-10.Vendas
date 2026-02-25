@@ -5,22 +5,29 @@ import { Modal, Pressable, View, Text, TouchableOpacity, StyleSheet, Animated, E
 // Bibliotecas externas
 import Svg, { Rect, Path } from 'react-native-svg';
 
-// Icone do banco (mesmo da tela de resgate)
+// Icone do banco (reutilizado do sistema)
 import { BankIcon } from './08.WalletMenuIcons';
 
-// Interface do modal de aguardando aprovacao
+// Interface do modal de confirmacao
+interface ConfirmModalProps {
+  visible: boolean; //..Controla visibilidade
+  onConfirm: () => void; //..Callback ao confirmar
+  onCancel: () => void; //..Callback ao cancelar
+}
+
+// Interface do modal de aguardando
 interface AwaitingModalProps {
   visible: boolean; //..Controla visibilidade
   onClose: () => void; //..Callback ao fechar
 }
 
-// Interface do modal de aprovado
-interface ApprovedModalProps {
+// Interface do modal de sucesso
+interface SuccessModalProps {
   visible: boolean; //..Controla visibilidade
   onClose: () => void; //..Callback ao fechar
 }
 
-// Dimensoes fixas dos modais (iguais para ambos conforme Figma)
+// Dimensoes fixas dos modais (mesmo padrao do sistema)
 const MODAL_WIDTH = 300; //..Largura fixa
 const MODAL_HEIGHT = 295; //..Altura fixa
 
@@ -33,9 +40,10 @@ const SCREEN_WIDTH = Dimensions.get('window').width; //..Largura da tela
 const SCREEN_HEIGHT = Dimensions.get('window').height; //..Altura da tela
 const CONFETTI_COLORS = ['#1777CF', '#FFD700', '#FF6B6B', '#4CAF50', '#FF9800', '#9C27B0', '#00BCD4']; //..Cores variadas
 
-// Componente do icone de aguardando (raios giratorios + calculadora branca)
-// Mesmo padrao do PaymentFlow-CreditCard-AwaitingApproval com calculadora no centro
-const AwaitingIcon: React.FC = () => {
+
+// Componente do icone de aguardando (raios giratorios + banco no centro)
+// Mesmo padrao do AnticipateApprovalModals com banco no lugar da calculadora
+const WithdrawAwaitingIcon: React.FC = () => {
   // Animacoes de rotacao e pulso
   const spin = useRef(new Animated.Value(0)).current; //..Valor de rotacao
   const pulse = useRef(new Animated.Value(0)).current; //..Valor de pulso
@@ -84,18 +92,54 @@ const AwaitingIcon: React.FC = () => {
   );
 };
 
-// Modal de aguardando aprovacao
-// Mesmo padrao do PaymentFlow-CreditCard-AwaitingApproval
-const AnticipateAwaitingModal: React.FC<AwaitingModalProps> = ({ visible, onClose }) => (
-  <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-    <Pressable style={styles.overlay} onPress={onClose}>
-      <Pressable style={styles.card} onPress={() => {}}>
-        <Text style={styles.awaitingText}>Aguardando aprovação...</Text>
-        <AwaitingIcon />
+
+// Modal de confirmacao de resgate
+// Pergunta ao usuario se deseja resgatar antes de prosseguir
+const WithdrawConfirmModal: React.FC<ConfirmModalProps> = ({ visible, onConfirm, onCancel }) => (
+  <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+    <Pressable style={styles.overlay} onPress={onCancel}>
+      <Pressable style={styles.confirmCard} onPress={() => {}}>
+        {/* Icone de banco no topo */}
+        <View style={styles.confirmIconBox}>
+          <View style={{ transform: [{ scale: 1.8 }] }}>
+            <BankIcon color="#1777CF" />
+          </View>
+        </View>
+
+        {/* Texto de confirmacao */}
+        <View style={styles.confirmTextBox}>
+          <Text style={styles.confirmTitle}>Confirmar resgate</Text>
+          <Text style={styles.confirmSubtitle}>Deseja realmente resgatar{'\n'}este valor?</Text>
+        </View>
+
+        {/* Botoes de acao */}
+        <View style={styles.confirmButtons}>
+          <TouchableOpacity style={styles.cancelButton} onPress={onCancel} activeOpacity={0.7}>
+            <Text style={styles.cancelButtonText}>Não</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.yesButton} onPress={onConfirm} activeOpacity={0.7}>
+            <Text style={styles.yesButtonText}>Sim</Text>
+          </TouchableOpacity>
+        </View>
       </Pressable>
     </Pressable>
   </Modal>
 );
+
+
+// Modal de aguardando resgate
+// Mesmo padrao do AnticipateAwaitingModal com banco no centro
+const WithdrawAwaitingModal: React.FC<AwaitingModalProps> = ({ visible, onClose }) => (
+  <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Pressable style={styles.overlay} onPress={() => {}}>
+      <Pressable style={styles.card} onPress={() => {}}>
+        <Text style={styles.awaitingText}>Processando resgate...</Text>
+        <WithdrawAwaitingIcon />
+      </Pressable>
+    </Pressable>
+  </Modal>
+);
+
 
 // Componente de animacao de confete (3 ondas consecutivas)
 // Particulas coloridas caindo do topo da tela com oscilacao e rotacao
@@ -171,8 +215,9 @@ const ConfettiAnimation: React.FC<{ active: boolean }> = ({ active }) => {
   );
 };
 
+
 // Icone de aprovado (check branco em circulo azul com anel)
-// Mesmo padrao do PaymentFlow-Pix-Approved com dimensoes do Figma
+// Mesmo padrao do AnticipateApprovalModals
 const ApprovedIcon: React.FC = () => (
   <View style={styles.approvedIconOuter}>
     <View style={styles.approvedIconInner}>
@@ -183,23 +228,24 @@ const ApprovedIcon: React.FC = () => (
   </View>
 );
 
-// Modal de aprovado com confete
-// Exibe titulo "APROVADO!", subtitulo, botao fechar e animacao de confete
-const AnticipateApprovedModal: React.FC<ApprovedModalProps> = ({ visible, onClose }) => (
+
+// Modal de sucesso com confete
+// Exibe titulo, subtitulo, botao fechar e animacao de confete
+const WithdrawSuccessModal: React.FC<SuccessModalProps> = ({ visible, onClose }) => (
   <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
     <Pressable style={styles.overlay} onPress={() => {}}>
       {/* Animacao de confete sobre toda a tela */}
       <ConfettiAnimation active={visible} />
 
-      {/* Card do modal de aprovado */}
+      {/* Card do modal de sucesso */}
       <Pressable style={styles.cardApproved} onPress={() => {}}>
         {/* Icone de check */}
         <ApprovedIcon />
 
         {/* Textos centralizados */}
         <View style={styles.approvedTextBox}>
-          <Text style={styles.approvedTitle}>APROVADO!</Text>
-          <Text style={styles.approvedSubtitle}>Pagamento realizado{'\n'}com sucesso.</Text>
+          <Text style={styles.approvedTitle}>RESGATE APROVADO!</Text>
+          <Text style={styles.approvedSubtitle}>Resgate realizado{'\n'}com sucesso.</Text>
         </View>
 
         {/* Botao fechar */}
@@ -211,7 +257,8 @@ const AnticipateApprovedModal: React.FC<ApprovedModalProps> = ({ visible, onClos
   </Modal>
 );
 
-// Estilos dos modais de aprovacao
+
+// Estilos dos modais de resgate
 const styles = StyleSheet.create({
   // Overlay escuro do modal
   overlay: {
@@ -220,6 +267,85 @@ const styles = StyleSheet.create({
     alignItems: 'center', //...Centraliza horizontal
     justifyContent: 'center', //..Centraliza vertical
     padding: 20, //............Margem lateral
+  },
+
+  // === Modal de confirmacao ===
+
+  // Card do modal de confirmacao
+  confirmCard: {
+    width: MODAL_WIDTH, //............Largura fixa
+    paddingHorizontal: 15, //........Espaco lateral
+    paddingTop: 28, //...............Espaco superior
+    paddingBottom: 20, //............Espaco inferior
+    borderRadius: 18, //..............Arredondamento
+    backgroundColor: '#FCFCFC', //....Fundo branco
+    alignItems: 'center', //..........Centraliza horizontal
+    gap: 20, //......................Espaco entre elementos
+  },
+  // Icone do banco no topo do modal de confirmacao (quadrado com cantos arredondados)
+  confirmIconBox: {
+    width: 80, //..............Largura fixa
+    height: 80, //.............Altura fixa
+    borderRadius: 16, //.......Cantos levemente arredondados
+    backgroundColor: '#F4F4F5', //..Fundo cinza sutil
+    justifyContent: 'center', //...Centraliza vertical
+    alignItems: 'center', //......Centraliza horizontal
+  },
+  // Container dos textos de confirmacao
+  confirmTextBox: {
+    alignItems: 'center', //..Centraliza textos
+    gap: 8, //................Espaco entre titulo e subtitulo
+  },
+  // Titulo do modal de confirmacao
+  confirmTitle: {
+    fontSize: 16, //...............Tamanho da fonte
+    fontFamily: 'Inter_700Bold', //..Fonte bold
+    color: '#3A3F51', //............Cor do texto
+    textAlign: 'center', //........Centralizado
+  },
+  // Subtitulo do modal de confirmacao
+  confirmSubtitle: {
+    fontSize: 14, //...............Tamanho da fonte
+    fontFamily: 'Inter_500Medium', //..Fonte medium
+    color: '#7D8592', //............Cor secundaria
+    textAlign: 'center', //........Centralizado
+    lineHeight: 21, //..............Altura da linha
+  },
+  // Container dos botoes de confirmacao
+  confirmButtons: {
+    flexDirection: 'row', //..Layout horizontal
+    gap: 12, //................Espaco entre botoes
+    alignSelf: 'stretch', //..Largura total
+  },
+  // Botao cancelar (Nao)
+  cancelButton: {
+    flex: 1, //....................Metade da largura
+    height: 40, //.................Altura fixa
+    borderRadius: 10, //...........Arredondamento
+    backgroundColor: '#F4F4F5', //..Fundo cinza
+    alignItems: 'center', //.......Centraliza
+    justifyContent: 'center', //...Centraliza
+  },
+  // Texto do botao cancelar
+  cancelButtonText: {
+    fontSize: 14, //...............Tamanho da fonte
+    fontFamily: 'Inter_600SemiBold', //..Fonte semi bold
+    color: '#3A3F51', //............Cor do texto
+  },
+  // Botao confirmar (Sim)
+  yesButton: {
+    flex: 1, //....................Metade da largura
+    height: 40, //.................Altura fixa
+    borderRadius: 10, //...........Arredondamento
+    backgroundColor: '#1777CF', //..Fundo azul
+    alignItems: 'center', //.......Centraliza
+    justifyContent: 'center', //...Centraliza
+  },
+  // Texto do botao confirmar
+  yesButtonText: {
+    fontSize: 14, //...............Tamanho da fonte
+    fontFamily: 'Inter_600SemiBold', //..Fonte semi bold
+    color: '#FCFCFC', //............Cor branca
   },
 
   // === Modal de aguardando ===
@@ -237,7 +363,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start', //..Alinha ao topo
     gap: 25, //......................Espaco entre elementos
   },
-  // Texto de aguardando aprovacao
+  // Texto de aguardando
   awaitingText: {
     color: '#7D8592', //...............Cor secundaria
     fontSize: 14, //....................Tamanho da fonte
@@ -245,7 +371,7 @@ const styles = StyleSheet.create({
     textAlign: 'center', //............Centralizado
   },
 
-  // === Icone de aguardando (raios + calculadora) ===
+  // === Icone de aguardando (raios + banco) ===
 
   // Container principal do icone animado
   iconWrap: {
@@ -265,7 +391,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', //..Centraliza
     justifyContent: 'center', //..Centraliza
   },
-  // Circulo azul central (grande para destaque)
+  // Circulo azul central
   centerCircle: {
     width: 96, //..............Largura do circulo
     height: 96, //.............Altura do circulo
@@ -273,12 +399,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#1777CF', //..Fundo azul accent
     alignItems: 'center', //......Centraliza
     justifyContent: 'center', //..Centraliza
-    overflow: 'hidden', //........Recorta overflow
   },
 
-  // === Modal de aprovado ===
+  // === Modal de sucesso ===
 
-  // Card do modal de aprovado
+  // Card do modal de sucesso
   cardApproved: {
     width: MODAL_WIDTH, //............Largura fixa
     height: MODAL_HEIGHT, //..........Altura fixa
@@ -312,19 +437,19 @@ const styles = StyleSheet.create({
     alignItems: 'center', //....Centraliza
     justifyContent: 'center', //..Centraliza
   },
-  // Container dos textos de aprovado
+  // Container dos textos de sucesso
   approvedTextBox: {
     alignItems: 'center', //..Centraliza textos
     gap: 10, //...............Espaco entre titulo e subtitulo
   },
-  // Titulo "APROVADO!"
+  // Titulo de sucesso
   approvedTitle: {
     color: '#3A3F51', //...............Cor do texto
     fontSize: 14, //....................Tamanho da fonte
     fontFamily: 'Inter_600SemiBold', //..Fonte semi bold
     textAlign: 'center', //............Centralizado
   },
-  // Subtitulo de confirmacao
+  // Subtitulo de sucesso
   approvedSubtitle: {
     color: '#7D8592', //...............Cor secundaria
     fontSize: 14, //....................Tamanho da fonte
@@ -363,4 +488,4 @@ const styles = StyleSheet.create({
 });
 
 // Exports nomeados
-export { AnticipateAwaitingModal, AnticipateApprovedModal };
+export { WithdrawConfirmModal, WithdrawAwaitingModal, WithdrawSuccessModal };

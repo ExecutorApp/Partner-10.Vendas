@@ -1,23 +1,29 @@
 // React e React Native
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 
 // Tipos e dados de antecipacao
 import { Receivable, MOCK_RECEIVABLES, ANTICIPATION_RATE, calculateGrossAmount, calculateTotalDiscount, calculateNetAmount, calculateAverageTerm } from './18.AnticipateData';
 
 // Tipos e dados do resgate (reutilizados para conta destino)
-import { TransferMethod, PixKeyType, NewAccountFormData, SavedBankAccount, INITIAL_NEW_ACCOUNT, BRAZIL_BANKS, validatePixKey, validateDocument, getBankShortName } from './11.WithdrawData';
+import { TransferMethod, PixKeyType, NewAccountFormData, SavedBankAccount, INITIAL_NEW_ACCOUNT, BRAZIL_BANKS, validatePixKey, validateDocument } from './11.WithdrawData';
+
+// Contexto compartilhado de contas
+import { useSharedAccounts } from './34.SharedAccountsContext';
 
 // Hook de gerenciamento do formulario de antecipacao
 // Encapsula selecao de recebiveis, simulador e conta destino
-const useAnticipateForm = () => {
-  // Lista de recebiveis disponiveis
-  const receivables = MOCK_RECEIVABLES; //..Dados mock
+const useAnticipateForm = (anticipatedIds: Set<string> = new Set()) => {
+  // Lista de recebiveis disponiveis (filtra recebiveis ja antecipados)
+  const receivables = useMemo(() =>
+    MOCK_RECEIVABLES.filter(r => !anticipatedIds.has(r.id)),
+    [anticipatedIds]
+  ); //..Dados filtrados
 
   // Estado da selecao de recebiveis
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set()); //..IDs selecionados
 
-  // Estado da lista de contas salvas
-  const [savedAccounts, setSavedAccounts] = useState<SavedBankAccount[]>([]); //..Contas salvas (vazio inicial)
+  // Contas salvas compartilhadas entre telas
+  const { savedAccounts, addAccount, updateAccount: contextUpdateAccount, deleteAccount: contextDeleteAccount } = useSharedAccounts();
 
   // Estado da conta destino
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null); //..Conta selecionada
@@ -26,6 +32,15 @@ const useAnticipateForm = () => {
   // Estado do formulario de nova conta
   const [transferMethod, setTransferMethod] = useState<TransferMethod>('pix'); //..Metodo de transferencia
   const [newAccountData, setNewAccountData] = useState<NewAccountFormData>(INITIAL_NEW_ACCOUNT); //..Dados do formulario
+
+  // Limpa selecao de IDs que nao existem mais nos recebiveis
+  useEffect(() => {
+    setSelectedIds(prev => {
+      const validIds = new Set<string>();
+      prev.forEach(id => { if (receivables.some(r => r.id === id)) validIds.add(id); });
+      return validIds.size === prev.size ? prev : validIds; //..So atualiza se mudou
+    });
+  }, [receivables]);
 
   // Handler de selecionar/deselecionar recebivel individual
   const handleToggleReceivable = useCallback((id: string) => {
@@ -95,7 +110,7 @@ const useAnticipateForm = () => {
     // Monta nova conta salva com todos os campos
     const newAccount: SavedBankAccount = {
       id: newId, //..................................Identificador unico
-      bankName: newAccountData.nickname || getBankShortName(bankInfo?.name || '') || 'Conta Pix', //..Nome curto da conta
+      bankName: newAccountData.nickname || bankInfo?.name || (newAccountData.pixKey ? 'Pix' : 'Banco'), //..Nome do banco ou Pix
       bankCode: newAccountData.bankCode, //..........Codigo do banco
       holderName: '', //.............................Titular vazio
       agency: newAccountData.agency, //..............Agencia
@@ -107,14 +122,8 @@ const useAnticipateForm = () => {
       isDefault: newAccountData.isDefault, //.......Conta principal
     };
 
-    // Atualiza lista de contas
-    setSavedAccounts(prev => {
-      let updated = [...prev]; //..Copia lista
-      if (newAccount.isDefault) {
-        updated = updated.map(a => ({ ...a, isDefault: false })); //..Desmarca todas
-      }
-      return [...updated, newAccount]; //..Adiciona nova conta
-    });
+    // Adiciona ao contexto compartilhado
+    addAccount(newAccount);
 
     // Seleciona nova conta e fecha formulario
     setSelectedAccountId(newId); //..............Seleciona nova
@@ -123,41 +132,20 @@ const useAnticipateForm = () => {
     setTransferMethod('pix'); //................Reseta metodo
 
     return newId; //..Retorna ID da nova conta
-  }, [newAccountData]);
+  }, [newAccountData, addAccount]);
 
   // Handler de atualizar conta existente
-  // Recebe ID da conta e dados atualizados de todas as abas
+  // Delega ao contexto compartilhado
   const handleUpdateAccount = useCallback((id: string, updatedData: NewAccountFormData) => {
-    const bankInfo = BRAZIL_BANKS.find(b => b.code === updatedData.bankCode); //..Busca banco
-
-    setSavedAccounts(prev => prev.map(account => {
-      // Desmarca padrao das outras contas se nova e padrao
-      if (account.id !== id) {
-        if (updatedData.isDefault) return { ...account, isDefault: false }; //..Desmarca
-        return account; //..Sem alteracao
-      }
-
-      // Atualiza conta com todos os campos
-      return {
-        ...account, //..............................Preserva campos base
-        bankName: updatedData.nickname || getBankShortName(bankInfo?.name || '') || account.bankName, //..Nome curto
-        bankCode: updatedData.bankCode || account.bankCode, //..Codigo banco
-        agency: updatedData.agency || account.agency, //........Agencia
-        account: updatedData.account || account.account, //......Conta
-        accountType: updatedData.accountType, //................Tipo conta
-        pixKeyType: updatedData.pixKeyType, //..................Tipo chave Pix
-        pixKey: updatedData.pixKey, //..........................Valor chave Pix
-        document: updatedData.document || account.document, //..CPF ou CNPJ
-        isDefault: updatedData.isDefault, //....................Conta principal
-      };
-    }));
-  }, []);
+    contextUpdateAccount(id, updatedData);
+  }, [contextUpdateAccount]);
 
   // Handler de excluir conta salva
+  // Delega ao contexto compartilhado
   const handleDeleteAccount = useCallback((id: string) => {
-    setSavedAccounts(prev => prev.filter(a => a.id !== id)); //..Remove conta
+    contextDeleteAccount(id);
     if (selectedAccountId === id) setSelectedAccountId(null); //..Desmarca se era a selecionada
-  }, [selectedAccountId]);
+  }, [selectedAccountId, contextDeleteAccount]);
 
   // Validacao do formulario de nova conta via Pix
   const isPixFormValid = transferMethod === 'pix'

@@ -118,6 +118,15 @@ const ChevronDownIcon = () => (
   </Svg>
 );
 
+// Icone de alerta grande (modal de validacao, padrao do sistema)
+const AlertIcon = () => (
+  <Svg width="30" height="30" viewBox="0 0 30 30" fill="none">
+    <Path fillRule="evenodd" clipRule="evenodd" d="M15 0C6.716 0 0 6.716 0 15s6.716 15 15 15 15-6.716 15-15S23.284 0 15 0zm0 2.727c6.785 0 12.273 5.488 12.273 12.273S21.785 27.273 15 27.273 2.727 21.785 2.727 15 8.215 2.727 15 2.727z" fill="#EF4444"/>
+    <Path d="M15 8.182c.754 0 1.364.61 1.364 1.363v5.455c0 .753-.61 1.364-1.364 1.364a1.364 1.364 0 01-1.364-1.364V9.545c0-.753.61-1.363 1.364-1.363z" fill="#EF4444"/>
+    <Path d="M15 19.09a1.705 1.705 0 100 3.41 1.705 1.705 0 000-3.41z" fill="#EF4444"/>
+  </Svg>
+);
+
 
 // Modal de edicao de conta bancaria
 // Tela inteira com 4 abas: Pix, Transferencia, Extras e Exibicao (identico ao cadastro)
@@ -144,6 +153,10 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({
   // Estado de campos tocados (onBlur ativa validacao strict)
   const [pixKeyTouched, setPixKeyTouched] = useState(false); //..Chave Pix perdeu foco
   const [documentTouched, setDocumentTouched] = useState(false); //..Documento perdeu foco
+
+  // Estado do modal de validacao
+  const [showValidationModal, setShowValidationModal] = useState(false); //..Visibilidade
+  const [validationErrors, setValidationErrors] = useState<string[]>([]); //..Lista de erros
 
   // Reinicializa ao abrir com nova conta
   useEffect(() => {
@@ -186,6 +199,54 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({
   const handleBankSelect = (code: string, _name: string) => {
     handleFieldChange('bankCode', code); //..Define banco
     setShowBankModal(false); //................Fecha modal
+  };
+
+  // Coleta erros de validacao de AMBAS as abas (Pix + Transferencia)
+  const collectValidationErrors = (): string[] => {
+    const errors: string[] = []; //..Lista de erros
+
+    // Validacao da aba Pix
+    if (!formData.pixKey) {
+      errors.push('Preencha a chave Pix'); //..Campo vazio
+    } else {
+      const pixErr = validatePixKey(formData.pixKey, formData.pixKeyType, true); //..Valida strict
+      if (pixErr) errors.push(pixErr); //..Campo invalido
+    }
+
+    // Validacao da aba Transferencia
+    if (!formData.bankCode) {
+      errors.push('Selecione o banco'); //..Campo vazio
+    }
+    if (!formData.agency) {
+      errors.push('Preencha a agência'); //..Campo vazio
+    } else if (formData.agency.length < 3) {
+      errors.push('Agência incompleta'); //..Campo invalido
+    }
+    if (!formData.account) {
+      errors.push('Preencha a conta'); //..Campo vazio
+    } else if (formData.account.length < 4) {
+      errors.push('Conta incompleta'); //..Campo invalido
+    }
+    if (!formData.document) {
+      errors.push('Preencha o CPF/CNPJ do titular'); //..Campo vazio
+    } else {
+      const docErr = validateDocument(formData.document, true); //..Valida strict
+      if (docErr) errors.push(docErr); //..Campo invalido
+    }
+
+    return errors; //..Retorna lista
+  };
+
+  // Handler de confirmar com validacao de ambas as abas
+  const handleConfirm = () => {
+    const errors = collectValidationErrors(); //..Coleta erros
+    if (errors.length > 0) {
+      setValidationErrors(errors); //..Define erros
+      setShowValidationModal(true); //..Abre modal
+      return; //..Bloqueia confirmacao
+    }
+    onSave(formData); //..Salva dados
+    onClose(); //..Fecha modal
   };
 
   // Handler de troca de aba (sincroniza metodo de transferencia)
@@ -465,7 +526,7 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({
           </ScrollView>
 
           {/* Botao confirmar fixo no rodape */}
-          <TouchableOpacity style={styles.confirmButton} onPress={() => { onSave(formData); onClose(); }} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm} activeOpacity={0.7}>
             <Text style={styles.confirmText}>Confirmar</Text>
           </TouchableOpacity>
         </View>
@@ -519,6 +580,41 @@ const EditAccountModal: React.FC<EditAccountModalProps> = ({
                 </TouchableOpacity>
               </React.Fragment>
             ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Modal de validacao (padrao do sistema) */}
+      <Modal visible={showValidationModal} transparent animationType="fade" onRequestClose={() => setShowValidationModal(false)}>
+        <TouchableOpacity style={styles.validationOverlay} activeOpacity={1} onPress={() => setShowValidationModal(false)}>
+          <View style={styles.validationModal}>
+            {/* Icone de alerta grande */}
+            <View style={styles.validationIconBox}>
+              <AlertIcon />
+            </View>
+
+            {/* Titulo do modal */}
+            <Text style={styles.validationTitle}>Campos obrigatórios</Text>
+
+            {/* Checklist de erros alinhada a esquerda */}
+            <View style={styles.validationTextBox}>
+              {validationErrors.map((error, index) => (
+                <View key={index} style={styles.validationCheckRow}>
+                  <Svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <Path d="M3 7C3 4.79086 4.79086 3 7 3H17C19.2091 3 21 4.79086 21 7V17C21 19.2091 19.2091 21 17 21H7C4.79086 21 3 19.2091 3 17V7Z" stroke="#D8E0F0" strokeWidth="2" />
+                  </Svg>
+                  <Text style={styles.validationErrorText}>{error}</Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Mensagem auxiliar */}
+            <Text style={styles.validationMessage}>Preencha os campos acima antes de continuar.</Text>
+
+            {/* Botao entendi */}
+            <TouchableOpacity style={styles.validationButton} onPress={() => setShowValidationModal(false)} activeOpacity={0.7}>
+              <Text style={styles.validationButtonText}>Entendi</Text>
+            </TouchableOpacity>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -902,6 +998,87 @@ const styles = StyleSheet.create({
   dropdownOptionTextActive: {
     color: '#1777CF', //..............Cor accent
     fontFamily: 'Inter_600SemiBold', //..Fonte semi bold
+  },
+
+  // === Modal de validacao (padrao do sistema) ===
+
+  // Overlay do modal de validacao
+  validationOverlay: {
+    flex: 1, //.................Ocupa toda a tela
+    backgroundColor: 'rgba(0,0,0,0.4)', //..Fundo escuro
+    justifyContent: 'center', //..Centraliza vertical
+    alignItems: 'center', //......Centraliza horizontal
+    paddingHorizontal: 32, //....Margem lateral
+  },
+  // Container do modal de validacao
+  validationModal: {
+    width: 288, //................Largura fixa padrao
+    backgroundColor: '#FAFAFA', //..Fundo neutro claro
+    borderRadius: 16, //..........Arredondamento
+    paddingTop: 28, //.............Espaco superior
+    paddingBottom: 20, //..........Espaco inferior
+    paddingHorizontal: 14, //......Espaco lateral
+    alignItems: 'center', //.......Centraliza conteudo
+    gap: 20, //....................Espaco entre secoes
+  },
+  // Container do icone de alerta grande
+  validationIconBox: {
+    width: 80, //..............Largura fixa
+    height: 80, //.............Altura fixa
+    borderRadius: 12, //.......Arredondamento
+    backgroundColor: '#F4F4F5', //..Fundo cinza sutil
+    justifyContent: 'center', //...Centraliza vertical
+    alignItems: 'center', //......Centraliza horizontal
+  },
+  // Titulo do modal de validacao
+  validationTitle: {
+    fontSize: 16, //...............Tamanho da fonte
+    fontFamily: 'Inter_700Bold', //..Fonte bold
+    color: '#3A3F51', //............Cor do texto
+    textAlign: 'center', //........Centralizado
+  },
+  // Container da checklist de erros
+  validationTextBox: {
+    alignSelf: 'stretch', //..Largura total
+    gap: 10, //................Espaco entre itens
+    paddingHorizontal: 6, //..Respiro lateral
+  },
+  // Linha da checklist (checkbox + texto)
+  validationCheckRow: {
+    flexDirection: 'row', //..Layout horizontal
+    alignItems: 'center', //..Alinha vertical
+    gap: 10, //................Espaco entre icone e texto
+  },
+  // Texto do erro (alinhado a esquerda)
+  validationErrorText: {
+    flex: 1, //....................Ocupa espaco disponivel
+    fontSize: 14, //...............Tamanho da fonte
+    fontFamily: 'Inter_500Medium', //..Fonte medium
+    color: '#3F3F46', //............Cor escura
+    lineHeight: 20, //..............Altura da linha
+  },
+  // Mensagem auxiliar do modal
+  validationMessage: {
+    fontSize: 13, //...............Tamanho da fonte
+    fontFamily: 'Inter_400Regular', //..Fonte regular
+    color: '#64748B', //............Cor cinza medio
+    lineHeight: 18, //..............Altura da linha
+    textAlign: 'center', //........Centralizado
+  },
+  // Botao do modal de validacao
+  validationButton: {
+    backgroundColor: '#1777CF', //..Fundo azul
+    borderRadius: 10, //...........Arredondamento
+    height: 40, //.................Altura fixa
+    justifyContent: 'center', //...Centraliza vertical
+    alignItems: 'center', //.......Centraliza horizontal
+    alignSelf: 'stretch', //......Largura total
+  },
+  // Texto do botao de validacao
+  validationButtonText: {
+    fontSize: 14, //...............Tamanho da fonte
+    fontFamily: 'Inter_700Bold', //..Fonte bold
+    color: '#FAFAFA', //............Cor branca
   },
 });
 

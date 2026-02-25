@@ -119,10 +119,11 @@ const ReconciliationScreen = () => {
       <Header
         title="Conciliação"
         notificationCount={0}
-        onMenuPress={() => setSideMenuVisible(true)}
+        onMenuPress={() => {}}
         showBackButton={true}
         onBackPress={handleGoBack}
         hideActions={true}
+        hideMenu={true}
         backButtonColor="#1777CF"
       />
 

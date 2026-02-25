@@ -1,6 +1,7 @@
 // React e React Native
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, StatusBar, KeyboardAvoidingView, Platform, Animated } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
 // Bibliotecas externas
 import { useNavigation } from '@react-navigation/native';
@@ -19,9 +20,8 @@ import Header from '../5.Side Menu/2.Header';
 import SideMenuScreen from '../5.Side Menu/1.SideMenuScreen';
 import WithdrawDestination from './10.WithdrawScreen02';
 import { WalletBalanceIcon } from './08.WalletMenuIcons';
-
-// Saldo disponivel (mock)
-const AVAILABLE_BALANCE = 4235.50; //..Saldo para resgate
+import { WithdrawConfirmModal, WithdrawAwaitingModal, WithdrawSuccessModal } from './24.WithdrawApprovalModals';
+import WithdrawHistoryModal, { WithdrawHistoryItem, INITIAL_WITHDRAW_HISTORY } from './31.WithdrawHistoryModal';
 
 // Tela principal de resgate de saldo
 // Header com voltar, saldo, input monetario e conta destino
@@ -30,13 +30,31 @@ const WithdrawScreen = () => {
   const navigation = useNavigation(); //..Hook de navegacao
   const [sideMenuVisible, setSideMenuVisible] = useState(false); //..Controle do menu lateral
 
+  // Saldo dinamico (atualiza apos cada resgate)
+  const [balance, setBalance] = useState(4235.50); //..Saldo disponivel para resgate
+
+  // Historico de resgates (atualiza apos cada resgate)
+  const [withdrawHistory, setWithdrawHistory] = useState<WithdrawHistoryItem[]>(INITIAL_WITHDRAW_HISTORY);
+
+  // Estados dos modais de aprovacao de resgate
+  const [confirmVisible, setConfirmVisible] = useState(false); //..Modal de confirmacao
+  const [awaitingVisible, setAwaitingVisible] = useState(false); //..Modal de aguardando
+  const [successVisible, setSuccessVisible] = useState(false); //..Modal de sucesso
+  const approvalTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null); //..Timer da transicao
+
+  // Ref para dados do resgate pendente (capturados ao clicar Resgatar)
+  const pendingWithdrawRef = useRef<{ amount: number; bankName: string } | null>(null);
+
+  // Estado do modal de historico
+  const [historyVisible, setHistoryVisible] = useState(false); //..Modal de historico
+
   // Hook do formulario
   const {
     rawInput, amount, handleValueChange,
     savedAccounts, selectedAccountId, handleSelectAccount, showNewForm, handleToggleNewForm,
     transferMethod, handleTransferMethodChange, newAccountData, handleNewAccountChange,
-    handleConfirmNewAccount, handleDeleteAccount, valueError, isFormValid,
-  } = useWithdrawForm(AVAILABLE_BALANCE);
+    handleConfirmNewAccount, handleUpdateAccount, handleDeleteAccount, valueError, isFormValid,
+  } = useWithdrawForm(balance);
 
   // Animacao de respiracao do card de saldo
   const pulseAnim = useRef(new Animated.Value(0)).current; //..Valor animado
@@ -54,6 +72,68 @@ const WithdrawScreen = () => {
   // Opacidade interpolada do overlay
   const overlayOpacity = pulseAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.4] }); //..Interpolacao
 
+  // Handler de abrir modal de confirmacao de resgate
+  // Captura dados do resgate antes de abrir o modal
+  const handleResgatar = useCallback(() => {
+    const selectedAccount = savedAccounts.find(a => a.id === selectedAccountId);
+    pendingWithdrawRef.current = {
+      amount, //..Valor do resgate
+      bankName: selectedAccount?.bankName || 'Conta', //..Nome do banco destino
+    };
+    setConfirmVisible(true); //..Abre modal de confirmacao
+  }, [amount, savedAccounts, selectedAccountId]);
+
+  // Handler de confirmar resgate (abre fluxo de aprovacao)
+  const handleConfirmWithdraw = useCallback(() => {
+    setConfirmVisible(false); //..Fecha confirmacao
+    setAwaitingVisible(true); //..Abre modal de aguardando
+    approvalTimerRef.current = setTimeout(() => {
+      setAwaitingVisible(false); //..Fecha aguardando
+      setSuccessVisible(true); //....Abre sucesso
+    }, 5000); //..Transicao apos 5 segundos
+  }, []);
+
+  // Handler de fechar modal de aguardando
+  const handleCloseAwaiting = useCallback(() => {
+    if (approvalTimerRef.current) clearTimeout(approvalTimerRef.current); //..Cancela timer
+    setAwaitingVisible(false); //..Fecha modal
+  }, []);
+
+  // Handler de fechar modal de sucesso
+  // Desconta saldo, registra no historico e zera o input
+  const handleCloseSuccess = useCallback(() => {
+    const pending = pendingWithdrawRef.current;
+    if (pending) {
+      const newBalance = balance - pending.amount; //..Novo saldo
+      const today = new Date().toISOString().split('T')[0]; //..Data YYYY-MM-DD
+
+      // Registra no historico (mais recente primeiro)
+      const newItem: WithdrawHistoryItem = {
+        id: Date.now().toString(), //..ID unico
+        date: today, //................Data do resgate
+        amount: pending.amount, //......Valor resgatado
+        status: 'approved', //..........Status aprovado
+        bankName: pending.bankName, //..Banco destino
+        balanceBefore: balance, //......Saldo antes
+        balanceAfter: newBalance, //....Saldo depois
+      };
+
+      setWithdrawHistory(prev => [newItem, ...prev]); //..Adiciona ao topo
+      setBalance(newBalance); //..Atualiza saldo
+      pendingWithdrawRef.current = null; //..Limpa dados pendentes
+    }
+
+    setSuccessVisible(false); //..Fecha modal
+    handleValueChange(''); //......Zera o input
+  }, [balance, handleValueChange]);
+
+  // Cleanup do timer ao desmontar
+  useEffect(() => {
+    return () => {
+      if (approvalTimerRef.current) clearTimeout(approvalTimerRef.current); //..Cancela timer
+    };
+  }, []);
+
   // Carregamento de fontes
   const [fontsLoaded] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold });
   if (!fontsLoaded) return null; //..Aguarda fontes
@@ -68,9 +148,17 @@ const WithdrawScreen = () => {
         notificationCount={0}
         showBackButton={true}
         onBackPress={() => navigation.goBack()}
-        onMenuPress={() => setSideMenuVisible(true)}
+        onMenuPress={() => {}}
         hideActions={true}
+        hideMenu={true}
         backButtonColor="#1777CF"
+        extraActions={
+          <TouchableOpacity onPress={() => setHistoryVisible(true)} activeOpacity={0.7} style={styles.historyButton}>
+            <Svg width={28} height={28} viewBox="0 0 24 24" fill="none">
+              <Path d="M15 10.25c-3.171 0-5.75 2.58-5.75 5.75s2.579 5.75 5.75 5.75 5.75-2.58 5.75-5.75-2.579-5.75-5.75-5.75zm1.955 6.5H15a.75.75 0 0 1-.75-.75v-2.035a.75.75 0 0 1 1.5 0v1.285h1.205a.75.75 0 0 1 0 1.5zM16 2.25H6C4.48 2.25 3.25 3.48 3.25 5v13c0 1.52 1.23 2.75 2.75 2.75h3.54A7.146 7.146 0 0 1 7.75 16c0-4 3.25-7.25 7.25-7.25 1.38 0 2.66.38 3.75 1.06V5c0-1.52-1.23-2.75-2.75-2.75zm-8 10.5H7c-.41 0-.75-.34-.75-.75s.34-.75.75-.75h1c.41 0 .75.34.75.75s-.34.75-.75.75zm3-3H7c-.41 0-.75-.34-.75-.75s.34-.75.75-.75h4c.41 0 .75.34.75.75s-.34.75-.75.75zm4-3H7c-.41 0-.75-.34-.75-.75s.34-.75.75-.75h8c.41 0 .75.34.75.75s-.34.75-.75.75z" fill="#7D8592" />
+            </Svg>
+          </TouchableOpacity>
+        }
       />
 
       {/* Divisoria padrao abaixo do header */}
@@ -98,7 +186,7 @@ const WithdrawScreen = () => {
             </View>
             <View style={styles.balanceInfo}>
               <Text style={styles.balanceLabel}>Saldo disponível para resgate</Text>
-              <Text style={styles.balanceValue}>{formatCurrency(AVAILABLE_BALANCE)}</Text>
+              <Text style={styles.balanceValue}>{formatCurrency(balance)}</Text>
             </View>
           </View>
 
@@ -147,6 +235,7 @@ const WithdrawScreen = () => {
               newAccountData={newAccountData}
               onNewAccountChange={handleNewAccountChange}
               onConfirmNewAccount={handleConfirmNewAccount}
+              onUpdateAccount={handleUpdateAccount}
               onDeleteAccount={handleDeleteAccount}
             />
           </View>
@@ -157,13 +246,21 @@ const WithdrawScreen = () => {
       <View style={styles.bottomBar}>
         <TouchableOpacity
           style={[styles.continueButton, !isFormValid && styles.continueButtonDisabled]}
-          onPress={() => {}}
+          onPress={handleResgatar}
           disabled={!isFormValid}
           activeOpacity={0.7}
         >
-          <Text style={styles.continueButtonText}>Continuar</Text>
+          <Text style={styles.continueButtonText}>Resgatar</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Modais de aprovacao de resgate */}
+      <WithdrawConfirmModal visible={confirmVisible} onConfirm={handleConfirmWithdraw} onCancel={() => setConfirmVisible(false)} />
+      <WithdrawAwaitingModal visible={awaitingVisible} onClose={handleCloseAwaiting} />
+      <WithdrawSuccessModal visible={successVisible} onClose={handleCloseSuccess} />
+
+      {/* Modal de historico de resgates */}
+      <WithdrawHistoryModal visible={historyVisible} onClose={() => setHistoryVisible(false)} history={withdrawHistory} />
 
       {/* Menu lateral do sistema */}
       <SideMenuScreen isVisible={sideMenuVisible} onClose={() => setSideMenuVisible(false)} />
@@ -338,6 +435,21 @@ const styles = StyleSheet.create({
     fontSize: 16, //...............Tamanho da fonte
     fontFamily: 'Inter_700Bold', //..Fonte bold
     color: '#FCFCFC', //............Cor branca
+  },
+
+  // === Botao de historico no header ===
+
+  // Container do botao de historico (extrema direita do header, 10px da borda)
+  historyButton: {
+    width: 38, //...........Largura fixa
+    height: 38, //..........Altura fixa
+    alignItems: 'center', //..Centraliza horizontal
+    justifyContent: 'center', //..Centraliza vertical
+    borderWidth: 1, //..........Borda visivel
+    borderColor: '#D8E0F0', //..Cor cinza clara padrao
+    borderRadius: 10, //........Cantos arredondados
+    marginLeft: 'auto', //....Empurra para extrema direita
+    marginRight: 15, //........10px de respiro da borda direita ← AJUSTE AQUI
   },
 });
 

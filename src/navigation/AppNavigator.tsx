@@ -37,6 +37,7 @@ import WalletHomeScreen from '../screens/16.CarteiraDigital/01.WalletHomeScreen'
 import WithdrawScreen from '../screens/16.CarteiraDigital/09.WithdrawScreen01';
 import AnticipateScreen from '../screens/16.CarteiraDigital/20.AnticipateScreen01';
 import ReconciliationScreen from '../screens/16.CarteiraDigital/27.ReconciliationScreen01';
+import { SharedAccountsProvider } from '../screens/16.CarteiraDigital/34.SharedAccountsContext';
 
 import LeadLolaSwipeContainer from '../screens/15.Commercial/components/Chat/10.00.LeadLolaSwipeContainer';
 import CameraScreen from '../screens/15.Commercial/components/Chat/camera/CameraScreen';
@@ -75,7 +76,8 @@ const Stack = createStackNavigator<RootStackParamList>();
 
 export const AppNavigator: React.FC = () => {
   return (
-    <NavigationContainer
+    <SharedAccountsProvider>
+      <NavigationContainer
       ref={navigationRef}
 	  documentTitle={{
         formatter: (options, route) => 
@@ -623,6 +625,7 @@ export const AppNavigator: React.FC = () => {
           options={{}}
         />
       </Stack.Navigator>
-    </NavigationContainer>
+      </NavigationContainer>
+    </SharedAccountsProvider>
   );
 };

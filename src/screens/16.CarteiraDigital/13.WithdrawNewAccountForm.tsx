@@ -137,39 +137,40 @@ const WithdrawNewAccountForm: React.FC<WithdrawNewAccountFormProps> = ({
     if (tab === 'transfer') onTransferMethodChange('transfer'); //..Sincroniza metodo
   };
 
-  // Coleta erros de validacao do formulario conforme metodo ativo
+  // Coleta erros de validacao de AMBAS as abas (Pix + Transferencia)
   // Distingue entre campo vazio (nao preenchido) e campo invalido (preenchido errado)
   const collectValidationErrors = (): string[] => {
     const errors: string[] = []; //..Lista de erros
-    if (transferMethod === 'pix') {
-      if (!newAccountData.pixKey) {
-        errors.push('Preencha a chave Pix'); //..Campo vazio
-      } else {
-        const pixErr = validatePixKey(newAccountData.pixKey, newAccountData.pixKeyType, true); //..Valida strict
-        if (pixErr) errors.push(pixErr); //..Campo invalido
-      }
+
+    // Validacao da aba Pix
+    if (!newAccountData.pixKey) {
+      errors.push('Preencha a chave Pix'); //..Campo vazio
+    } else {
+      const pixErr = validatePixKey(newAccountData.pixKey, newAccountData.pixKeyType, true); //..Valida strict
+      if (pixErr) errors.push(pixErr); //..Campo invalido
     }
-    if (transferMethod === 'transfer') {
-      if (!newAccountData.bankCode) {
-        errors.push('Selecione o banco'); //..Campo vazio
-      }
-      if (!newAccountData.agency) {
-        errors.push('Preencha a agência'); //..Campo vazio
-      } else if (newAccountData.agency.length < 3) {
-        errors.push('Agência incompleta'); //..Campo invalido
-      }
-      if (!newAccountData.account) {
-        errors.push('Preencha a conta'); //..Campo vazio
-      } else if (newAccountData.account.length < 4) {
-        errors.push('Conta incompleta'); //..Campo invalido
-      }
-      if (!newAccountData.document) {
-        errors.push('Preencha o CPF/CNPJ do titular'); //..Campo vazio
-      } else {
-        const docErr = validateDocument(newAccountData.document, true); //..Valida strict
-        if (docErr) errors.push(docErr); //..Campo invalido
-      }
+
+    // Validacao da aba Transferencia
+    if (!newAccountData.bankCode) {
+      errors.push('Selecione o banco'); //..Campo vazio
     }
+    if (!newAccountData.agency) {
+      errors.push('Preencha a agência'); //..Campo vazio
+    } else if (newAccountData.agency.length < 3) {
+      errors.push('Agência incompleta'); //..Campo invalido
+    }
+    if (!newAccountData.account) {
+      errors.push('Preencha a conta'); //..Campo vazio
+    } else if (newAccountData.account.length < 4) {
+      errors.push('Conta incompleta'); //..Campo invalido
+    }
+    if (!newAccountData.document) {
+      errors.push('Preencha o CPF/CNPJ do titular'); //..Campo vazio
+    } else {
+      const docErr = validateDocument(newAccountData.document, true); //..Valida strict
+      if (docErr) errors.push(docErr); //..Campo invalido
+    }
+
     return errors; //..Retorna lista
   };
 
@@ -519,13 +520,23 @@ const WithdrawNewAccountForm: React.FC<WithdrawNewAccountFormProps> = ({
               <AlertIcon />
             </View>
 
-            {/* Mensagem e lista de erros centralizada */}
+            {/* Titulo do modal */}
+            <Text style={styles.validationTitle}>Campos obrigatórios</Text>
+
+            {/* Checklist de erros alinhada a esquerda */}
             <View style={styles.validationTextBox}>
               {validationErrors.map((error, index) => (
-                <Text key={index} style={styles.validationErrorText}>{error}</Text>
+                <View key={index} style={styles.validationCheckRow}>
+                  <Svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                    <Path d="M3 7C3 4.79086 4.79086 3 7 3H17C19.2091 3 21 4.79086 21 7V17C21 19.2091 19.2091 21 17 21H7C4.79086 21 3 19.2091 3 17V7Z" stroke="#D8E0F0" strokeWidth="2" />
+                  </Svg>
+                  <Text style={styles.validationErrorText}>{error}</Text>
+                </View>
               ))}
-              <Text style={styles.validationMessage}>Corrija os campos acima antes de continuar.</Text>
             </View>
+
+            {/* Mensagem auxiliar */}
+            <Text style={styles.validationMessage}>Preencha os campos acima antes de continuar.</Text>
 
             {/* Botao entendi */}
             <TouchableOpacity style={styles.validationButton} onPress={() => setShowValidationModal(false)} activeOpacity={0.7}>
@@ -946,27 +957,40 @@ const styles = StyleSheet.create({
     justifyContent: 'center', //...Centraliza vertical
     alignItems: 'center', //......Centraliza horizontal
   },
-  // Container dos textos e erros
-  validationTextBox: {
-    alignItems: 'center', //..Centraliza textos
-    gap: 6, //.................Espaco entre itens
+  // Titulo do modal de validacao
+  validationTitle: {
+    fontSize: 16, //...............Tamanho da fonte
+    fontFamily: 'Inter_700Bold', //..Fonte bold
+    color: '#3A3F51', //............Cor do texto
+    textAlign: 'center', //........Centralizado
   },
-  // Texto do erro (centralizado, mesmo padrao do modal de exclusao)
+  // Container da checklist de erros
+  validationTextBox: {
+    alignSelf: 'stretch', //..Largura total
+    gap: 10, //................Espaco entre itens
+    paddingHorizontal: 6, //..Respiro lateral
+  },
+  // Linha da checklist (checkbox + texto)
+  validationCheckRow: {
+    flexDirection: 'row', //..Layout horizontal
+    alignItems: 'center', //..Alinha vertical
+    gap: 10, //................Espaco entre icone e texto
+  },
+  // Texto do erro (alinhado a esquerda)
   validationErrorText: {
+    flex: 1, //....................Ocupa espaco disponivel
     fontSize: 14, //...............Tamanho da fonte
     fontFamily: 'Inter_500Medium', //..Fonte medium
     color: '#3F3F46', //............Cor escura
     lineHeight: 20, //..............Altura da linha
-    textAlign: 'center', //........Centralizado
   },
   // Mensagem auxiliar do modal
   validationMessage: {
-    fontSize: 14, //...............Tamanho da fonte
-    fontFamily: 'Inter_500Medium', //..Fonte medium
+    fontSize: 13, //...............Tamanho da fonte
+    fontFamily: 'Inter_400Regular', //..Fonte regular
     color: '#64748B', //............Cor cinza medio
-    lineHeight: 20, //..............Altura da linha
+    lineHeight: 18, //..............Altura da linha
     textAlign: 'center', //........Centralizado
-    marginTop: 4, //...............Espaco superior
   },
   // Botao do modal de validacao
   validationButton: {

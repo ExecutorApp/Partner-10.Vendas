@@ -38,7 +38,9 @@ const ALL_NEW_ACCOUNT_FIELDS: DisplayField[] = ['bankName', 'pixKeyType', 'pixKe
 export const getFormDisplayValue = (data: NewAccountFormData, field: DisplayField): string => {
   if (field === 'bankName') {
     const bank = BRAZIL_BANKS.find(b => b.code === data.bankCode); //..Busca banco
-    return bank?.name || EMPTY_PLACEHOLDER; //..Nome ou placeholder
+    if (bank) return bank.name; //..Nome do banco selecionado
+    if (data.pixKey) return 'Pix'; //..Apenas chave Pix preenchida
+    return EMPTY_PLACEHOLDER; //..Nenhum dado preenchido
   }
   if (field === 'agency') return data.agency ? `Ag ${data.agency}` : EMPTY_PLACEHOLDER; //..Agencia formatada
   if (field === 'account') return data.account ? `Cc ${data.account}` : EMPTY_PLACEHOLDER; //..Conta formatada

@@ -15,10 +15,11 @@ interface HeaderProps {
   calendarMonthActive?: boolean;
   extraActions?: React.ReactNode;
   hideActions?: boolean;
+  hideMenu?: boolean;
   backButtonColor?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ title, notificationCount, onMenuPress, showBackButton = false, onBackPress, showAgendaIcons = false, onCalendarWeekPress, calendarWeekActive = false, onCalendarMonthPress, calendarMonthActive = false, extraActions, hideActions = false, backButtonColor = '#3A3F51' }) => {
+const Header: React.FC<HeaderProps> = ({ title, notificationCount, onMenuPress, showBackButton = false, onBackPress, showAgendaIcons = false, onCalendarWeekPress, calendarWeekActive = false, onCalendarMonthPress, calendarMonthActive = false, extraActions, hideActions = false, hideMenu = false, backButtonColor = '#3A3F51' }) => {
   return (
     <View style={styles.header}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
@@ -78,14 +79,16 @@ const Header: React.FC<HeaderProps> = ({ title, notificationCount, onMenuPress, 
                 )}
               </View>
           )}
-          <TouchableOpacity
-            style={styles.menuIcon}
-            onPress={onMenuPress}
-          >
-            <Svg width={20} height={17} viewBox="0 0 18 15" fill="none">
-              <Path d="M0 1.25C0 0.558594 0.558594 0 1.25 0H16.25C16.9414 0 17.5 0.558594 17.5 1.25C17.5 1.94141 16.9414 2.5 16.25 2.5H1.25C0.558594 2.5 0 1.94141 0 1.25ZM0 7.5C0 6.80859 0.558594 6.25 1.25 6.25H16.25C16.9414 6.25 17.5 6.80859 17.5 7.5C17.5 8.19141 16.9414 8.75 16.25 8.75H1.25C0.558594 8.75 0 8.19141 0 7.5ZM17.5 13.75C17.5 14.4414 16.9414 15 16.25 15H1.25C0.558594 15 0 14.4414 0 13.75C0 13.0586 0.558594 12.5 1.25 12.5H16.25C16.9414 12.5 17.5 13.0586 17.5 13.75Z" fill="#3A3F51" />
-            </Svg>
-          </TouchableOpacity>
+          {hideMenu ? null : (
+            <TouchableOpacity
+              style={styles.menuIcon}
+              onPress={onMenuPress}
+            >
+              <Svg width={20} height={17} viewBox="0 0 18 15" fill="none">
+                <Path d="M0 1.25C0 0.558594 0.558594 0 1.25 0H16.25C16.9414 0 17.5 0.558594 17.5 1.25C17.5 1.94141 16.9414 2.5 16.25 2.5H1.25C0.558594 2.5 0 1.94141 0 1.25ZM0 7.5C0 6.80859 0.558594 6.25 1.25 6.25H16.25C16.9414 6.25 17.5 6.80859 17.5 7.5C17.5 8.19141 16.9414 8.75 16.25 8.75H1.25C0.558594 8.75 0 8.19141 0 7.5ZM17.5 13.75C17.5 14.4414 16.9414 15 16.25 15H1.25C0.558594 15 0 14.4414 0 13.75C0 13.0586 0.558594 12.5 1.25 12.5H16.25C16.9414 12.5 17.5 13.0586 17.5 13.75Z" fill="#3A3F51" />
+              </Svg>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </View>
