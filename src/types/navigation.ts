@@ -14,6 +14,11 @@ export type RootStackParamList = {
   PaymentFlowBankSlip: undefined;
   PaymentFlowTed: undefined;
   CommissionsHome: undefined;
+  WalletHome: undefined;
+  WalletWithdraw: undefined;
+  WalletAnticipate: undefined;
+  WalletReconciliation: undefined;
+
   DiscountSales: undefined;
   DiscountManage: undefined;
   DiscountCustomer: undefined;
@@ -198,6 +203,11 @@ export const ScreenNames = {
   PaymentFlowBankSlip: 'PaymentFlowBankSlip' as const,
   PaymentFlowTed: 'PaymentFlowTed' as const,
   CommissionsHome: 'CommissionsHome' as const,
+  WalletHome: 'WalletHome' as const,
+  WalletWithdraw: 'WalletWithdraw' as const,
+  WalletAnticipate: 'WalletAnticipate' as const,
+  WalletReconciliation: 'WalletReconciliation' as const,
+
   DiscountSales: 'DiscountSales' as const,
   DiscountManage: 'DiscountManage' as const,
   DiscountCustomer: 'DiscountCustomer' as const,

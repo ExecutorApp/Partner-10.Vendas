@@ -1,56 +1,66 @@
+// React e React Native
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+
+// Bibliotecas externas
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { RootStackParamList, ScreenNames } from '../../types/navigation';
 import Svg, { Path } from 'react-native-svg';
+
+// Tipos e constantes
+import { RootStackParamList, ScreenNames } from '../../types/navigation';
 import { Layout } from '../../constants/theme';
 
-type MenuKey = 'Products' | 'Clients' | 'Sales' | 'Schedule' | 'Commission';
+// Tipo das chaves do menu inferior
+type MenuKey = 'Products' | 'Clients' | 'Sales' | 'Schedule' | 'Wallet';
 
+// Props do componente de menu inferior
 interface BottomMenuProps {
-  activeScreen?: string; // pode receber nome do menu ou da rota
-  currentScreen?: string; // compatibilidade com uso existente
-  fixedOnWeb?: boolean; // controla se o menu é fixo (overlay) ou relativo no Web
+  activeScreen?: string; //..Pode receber nome do menu ou da rota
+  currentScreen?: string; //..Compatibilidade com uso existente
+  fixedOnWeb?: boolean; //....Controla se o menu e fixo ou relativo no web
 }
 
+// Menu inferior com 5 icones de navegacao
+// Produtos, Clientes, Vendas (central), Agenda e Carteira Digital
 const BottomMenu: React.FC<BottomMenuProps> = ({ activeScreen = 'Products', currentScreen, fixedOnWeb = true }) => {
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const route = useRoute<any>();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>(); //..Hook de navegacao
+  const route = useRoute<any>(); //..Rota atual
 
+  // Mapa de rotas para chaves do menu
   const screenMap: Record<string, MenuKey> = {
-    ProductListScreen: 'Products',
-    PresentationScreen: 'Products',
-    ClientsScreen: 'Clients',
-    SalesScreen: 'Sales',
-    ScheduleScreen: 'Schedule',
-    CommissionScreen: 'Commission',
+    ProductListScreen: 'Products', //..Tela de produtos
+    PresentationScreen: 'Products', //..Tela de apresentacao
+    ClientsScreen: 'Clients', //........Tela de clientes
+    SalesScreen: 'Sales', //............Tela de vendas
+    ScheduleScreen: 'Schedule', //......Tela de agenda
+    WalletHome: 'Wallet', //............Tela de carteira digital
   };
 
+  // Resolve qual aba esta ativa com base na rota ou prop
   const resolveActive = (): MenuKey => {
-    const input = (currentScreen ?? activeScreen ?? route?.name ?? 'Products') as string;
-    // Se já for um nome de menu válido, retorna direto
-    if ((['Products', 'Clients', 'Sales', 'Schedule', 'Commission'] as string[]).includes(input)) {
-      return input as MenuKey;
+    const input = (currentScreen ?? activeScreen ?? route?.name ?? 'Products') as string; //..Input de referencia
+    if ((['Products', 'Clients', 'Sales', 'Schedule', 'Wallet'] as string[]).includes(input)) {
+      return input as MenuKey; //..Retorna direto se ja for chave valida
     }
-    // Caso seja nome de rota, mapeia para o menu correspondente
-    const mapped = screenMap[input];
-    return mapped ?? 'Products';
+    const mapped = screenMap[input]; //..Mapeia rota para chave
+    return mapped ?? 'Products'; //....Fallback para produtos
   };
 
-  const initialActive = useMemo(() => resolveActive(), [activeScreen, currentScreen, route?.name]);
-  const [activeMenu, setActiveMenu] = useState<MenuKey>(initialActive);
+  // Estado da aba ativa
+  const initialActive = useMemo(() => resolveActive(), [activeScreen, currentScreen, route?.name]); //..Calculo inicial
+  const [activeMenu, setActiveMenu] = useState<MenuKey>(initialActive); //..Estado local
 
+  // Sincroniza quando a referencia externa muda
   useEffect(() => {
-    setActiveMenu(initialActive);
+    setActiveMenu(initialActive); //..Atualiza aba ativa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialActive]);
 
+  // Handler de navegacao entre telas
   const handleNavigation = (screen: string) => {
-    // Atualiza estado ativo ao clicar no ícone
-    const menuKey = screen as MenuKey;
-    setActiveMenu(menuKey);
-    // Implementar navegação para diferentes telas
+    const menuKey = screen as MenuKey; //..Converte para chave
+    setActiveMenu(menuKey); //...........Atualiza estado ativo
     switch (screen) {
       case 'Products':
         // navigation.navigate('ProductListScreen');
@@ -59,24 +69,25 @@ const BottomMenu: React.FC<BottomMenuProps> = ({ activeScreen = 'Products', curr
         // navigation.navigate('ClientsScreen');
         break;
       case 'Sales':
-        navigation.navigate(ScreenNames.SalesHome);
+        navigation.navigate(ScreenNames.SalesHome); //..Navega para vendas
         break;
       case 'Schedule':
-        // Navega para a tela de Agenda
-        navigation.navigate(ScreenNames.Schedule);
+        navigation.navigate(ScreenNames.Schedule); //..Navega para agenda
         break;
-      case 'Commission':
-        // navigation.navigate('CommissionScreen');
+      case 'Wallet':
+        navigation.navigate(ScreenNames.WalletHome); //..Navega para carteira digital
         break;
       default:
         break;
     }
   };
 
+  // Retorna a cor do icone com base no estado ativo
   const getIconColor = (screen: MenuKey) => {
-    return activeMenu === screen ? '#1777CF' : '#3A3F51';
+    return activeMenu === screen ? '#1777CF' : '#3A3F51'; //..Azul se ativo, cinza se inativo
   };
 
+  // Estilo condicional para web (fixo ou relativo)
   const containerStyle = [
     styles.bottomNavigation,
     Platform.OS === 'web' ? ({ position: (fixedOnWeb ? ('fixed' as any) : 'relative') } as any) : null,
@@ -85,24 +96,23 @@ const BottomMenu: React.FC<BottomMenuProps> = ({ activeScreen = 'Products', curr
   return (
     <View
       style={containerStyle}
-      // Permite que gestos de rolagem passem para a lista abaixo, mantendo cliques nos ícones
       pointerEvents="box-none"
       accessibilityRole={Platform.OS === 'web' ? 'tablist' : undefined}
       accessibilityLabel="Menu inferior"
     >
-      {/* Área decorativa não deve capturar toques */}
+      {/* Area decorativa superior com curva */}
       <View style={styles.bottomNavCurve} pointerEvents="none" />
       <View style={styles.bottomNavContent} pointerEvents="box-none">
         <View style={styles.bottomNavSide}>
-          {/* Ícone Produtos */}
+          {/* Icone Produtos */}
           <TouchableOpacity onPress={() => handleNavigation('Products')}>
             <Svg width="22" height="18" viewBox="0 0 23 19" fill="none" style={styles.bottomNavIcon}>
               <Path d="M20.6131 2.87535H18.6511H16.7814H15.5365V1.57037C15.5365 0.761286 14.8722 0.100098 14.0496 0.100098H8.14597C7.32773 0.100098 6.65906 0.756936 6.65906 1.57037V2.87535H5.41411H3.54449H1.58688C0.764243 2.87535 0.0999756 3.53219 0.0999756 4.34128V16.6298C0.0999756 17.4389 0.764243 18.1001 1.58688 18.1001H3.54889H5.41851H16.7814H18.6511H20.6131C21.4313 18.1001 22.1 17.4433 22.1 16.6298V4.34128C22.0956 3.53219 21.4313 2.87535 20.6131 2.87535ZM7.10338 3.74534H15.0966H16.3415V17.2301H5.85403V3.74534H7.10338ZM7.54329 1.57037C7.54329 1.23978 7.81603 0.970083 8.15037 0.970083H14.054C14.3883 0.970083 14.6611 1.23978 14.6611 1.57037V2.87535H7.54329V1.57037ZM0.9798 16.6298V4.34128C0.9798 4.01068 1.25255 3.74099 1.58688 3.74099L5.41411 3.74534V10.7183V17.2301L1.58688 17.2258C1.25255 17.2301 0.9798 16.9604 0.9798 16.6298ZM5.41411 17.2301V10.7183V3.74534H4.9742V17.2301H5.41411ZM17.2214 17.2301V3.74534H16.7814V17.2301H17.2214ZM21.2158 16.6298C21.2158 16.9604 20.943 17.2301 20.6087 17.2301H16.7814V3.74534H20.6087C20.943 3.74534 21.2158 4.01503 21.2158 4.34563V16.6298Z" fill={getIconColor('Products')}/>
               <Path d="M5.41411 3.74534L1.58688 3.74099C1.25255 3.74099 0.9798 4.01068 0.9798 4.34128V16.6298C0.9798 16.9604 1.25255 17.2301 1.58688 17.2258L5.41411 17.2301M5.41411 3.74534H4.9742V17.2301H5.41411M5.41411 3.74534V10.7183V17.2301M16.7814 3.74534H17.2214V17.2301H16.7814M16.7814 3.74534V17.2301M16.7814 3.74534H20.6087C20.943 3.74534 21.2158 4.01503 21.2158 4.34563V16.6298C21.2158 16.9604 20.943 17.2301 20.6087 17.2301H16.7814M20.6131 2.87535H18.6511H16.7814H15.5365V1.57037C15.5365 0.761286 14.8722 0.100098 14.0496 0.100098H8.14597C7.32773 0.100098 6.65906 0.756936 6.65906 1.57037V2.87535H5.41411H3.54449H1.58688C0.764243 2.87535 0.0999756 3.53219 0.0999756 4.34128V16.6298C0.0999756 17.4389 0.764243 18.1001 1.58688 18.1001H3.54889H5.41851H16.7814H18.6511H20.6131C21.4313 18.1001 22.1 17.4433 22.1 16.6298V4.34128C22.0956 3.53219 21.4313 2.87535 20.6131 2.87535ZM7.10338 3.74534H15.0966H16.3415V17.2301H5.85403V3.74534H7.10338ZM7.54329 1.57037C7.54329 1.23978 7.81603 0.970083 8.15037 0.970083H14.054C14.3883 0.970083 14.6611 1.23978 14.6611 1.57037V2.87535H7.54329V1.57037Z" stroke={getIconColor('Products')} strokeWidth="0.2"/>
             </Svg>
           </TouchableOpacity>
-          
-          {/* Ícone Clientes */}
+
+          {/* Icone Clientes */}
           <TouchableOpacity onPress={() => handleNavigation('Clients')}>
             <Svg width="19" height="18" viewBox="0 0 19 18" fill="none" style={styles.bottomNavIcon}>
               <Path fillRule="evenodd" clipRule="evenodd" d="M9.25378 0C6.69974 0 4.62689 2.01269 4.62689 4.49118C4.62689 6.97031 6.69974 8.98236 9.25378 8.98236C11.8072 8.98236 13.8807 6.97031 13.8807 4.49118C13.8807 2.01269 11.8072 0 9.25378 0ZM9.25378 1.28319C11.0774 1.28319 12.5587 2.72101 12.5587 4.49118C12.5587 6.26199 11.0774 7.69916 9.25378 7.69916C7.42947 7.69916 5.94886 6.26199 5.94886 4.49118C5.94886 2.72101 7.42947 1.28319 9.25378 1.28319Z" fill={getIconColor('Clients')}/>
@@ -113,28 +123,26 @@ const BottomMenu: React.FC<BottomMenuProps> = ({ activeScreen = 'Products', curr
             </Svg>
           </TouchableOpacity>
         </View>
-        
+
         <View style={styles.bottomNavSide}>
-          {/* Ícone Agenda */}
+          {/* Icone Agenda */}
           <TouchableOpacity onPress={() => handleNavigation('Schedule')}>
             <Svg width="22" height="19" viewBox="0 0 22 19" fill="none" style={styles.bottomNavIcon}>
               <Path d="M4.42116 15.9286V18.5H21.5V1.78571H4.42116V5.64285M4.42116 5.64285H21.5C21.5 12.7143 17.5788 15.9286 17.5788 15.9286H0.5C0.5 15.9286 4.42116 12.7143 4.42116 5.64285ZM8.38589 0.5V3.07143M17.5788 0.5V3.07143M12.9606 0.5V3.07143" stroke={getIconColor('Schedule')} strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
             </Svg>
           </TouchableOpacity>
-          
-          {/* Ícone Comissão */}
-          <TouchableOpacity onPress={() => handleNavigation('Commission')}>
-            <Svg width="19" height="19" viewBox="0 0 19 19" fill="none" style={styles.bottomNavIcon}>
-              <Path d="M11.9971 10.0087C11.6038 10.0087 11.2193 10.1253 10.8923 10.3438C10.5653 10.5623 10.3104 10.8729 10.1599 11.2362C10.0094 11.5996 9.97003 11.9994 10.0468 12.3852C10.1235 12.7709 10.3129 13.1253 10.591 13.4034C10.8691 13.6815 11.2234 13.8709 11.6092 13.9476C11.9949 14.0243 12.3947 13.9849 12.7581 13.8344C13.1215 13.6839 13.432 13.429 13.6506 13.102C13.8691 12.775 13.9857 12.3905 13.9857 11.9972C13.9857 11.4698 13.7762 10.964 13.4033 10.5911C13.0303 10.2182 12.5245 10.0087 11.9971 10.0087ZM11.9971 13.1287C11.7733 13.1287 11.5546 13.0623 11.3685 12.938C11.1825 12.8137 11.0375 12.637 10.9518 12.4302C10.8662 12.2235 10.8438 11.996 10.8874 11.7765C10.9311 11.557 11.0388 11.3554 11.1971 11.1972C11.3553 11.039 11.5569 10.9312 11.7764 10.8875C11.9959 10.8439 12.2234 10.8663 12.4301 10.9519C12.6368 11.0376 12.8135 11.1826 12.9379 11.3687C13.0622 11.5547 13.1285 11.7735 13.1285 11.9972C13.1285 12.2973 13.0093 12.5851 12.7972 12.7973C12.585 13.0095 12.2972 13.1287 11.9971 13.1287ZM8.19141 6.20295C8.19141 5.80965 8.07478 5.42518 7.85627 5.09816C7.63776 4.77114 7.32719 4.51626 6.96383 4.36575C6.60046 4.21524 6.20063 4.17586 5.81488 4.25259C5.42914 4.32932 5.07481 4.51871 4.7967 4.79682C4.5186 5.07493 4.3292 5.42926 4.25247 5.815C4.17574 6.20075 4.21512 6.60058 4.36563 6.96395C4.51615 7.32731 4.77103 7.63788 5.09804 7.85639C5.42506 8.0749 5.80953 8.19152 6.20283 8.19152C6.73024 8.19152 7.23604 7.98201 7.60897 7.60908C7.9819 7.23616 8.19141 6.73035 8.19141 6.20295ZM5.07141 6.20295C5.07141 5.97918 5.13776 5.76043 5.26209 5.57436C5.38641 5.3883 5.56312 5.24329 5.76986 5.15765C5.9766 5.07201 6.20409 5.04961 6.42357 5.09326C6.64304 5.13692 6.84464 5.24468 7.00288 5.40291C7.16111 5.56115 7.26887 5.76275 7.31252 5.98222C7.35618 6.2017 7.33377 6.42919 7.24814 6.63593C7.1625 6.84267 7.01749 7.01938 6.83142 7.1437C6.64536 7.26802 6.42661 7.33438 6.20283 7.33438C5.90276 7.33438 5.61498 7.21518 5.40279 7.00299C5.19061 6.79081 5.07141 6.50303 5.07141 6.20295ZM13.1903 5.00981C13.1507 4.97 13.1037 4.93841 13.052 4.91685C13.0002 4.89529 12.9446 4.88419 12.8885 4.88419C12.8325 4.88419 12.7769 4.89529 12.7251 4.91685C12.6734 4.93841 12.6264 4.97 12.5868 5.00981L5.00969 12.587C4.96989 12.6265 4.93829 12.6735 4.91673 12.7253C4.89517 12.777 4.88407 12.8326 4.88407 12.8887C4.88407 12.9448 4.89517 13.0003 4.91673 13.0521C4.93829 13.1039 4.96989 13.1509 5.00969 13.1904C5.04897 13.2306 5.0959 13.2626 5.14772 13.2844C5.19953 13.3062 5.25518 13.3175 5.31141 13.3175C5.36763 13.3175 5.42328 13.3062 5.4751 13.2844C5.52691 13.2626 5.57384 13.2306 5.61312 13.1904L13.1903 5.61324C13.2301 5.57372 13.2617 5.52672 13.2832 5.47494C13.3048 5.42315 13.3159 5.36762 13.3159 5.31152C13.3159 5.25543 13.3048 5.1999 13.2832 5.14811C13.2617 5.09633 13.2301 5.04933 13.1903 5.00981Z" fill={getIconColor('Commission')}/>
-              <Path d="M9.09998 0.100098C7.31995 0.100098 5.57989 0.627938 4.09985 1.61687C2.6198 2.6058 1.46625 4.01141 0.785064 5.65595C0.103875 7.30048 -0.0743549 9.11008 0.272912 10.8559C0.620179 12.6017 1.47735 14.2054 2.73602 15.4641C3.99469 16.7227 5.59834 17.5799 7.34416 17.9272C9.08999 18.2744 10.8996 18.0962 12.5441 17.415C14.1887 16.7338 15.5943 15.5803 16.5832 14.1002C17.5721 12.6202 18.1 10.8801 18.1 9.1001C18.0963 6.71426 17.147 4.42718 15.4599 2.74014C13.7729 1.0531 11.4858 0.103725 9.09998 0.100098ZM9.09998 17.243C7.48947 17.243 5.91513 16.7654 4.57605 15.8706C3.23696 14.9759 2.19327 13.7041 1.57696 12.2162C0.960647 10.7283 0.799391 9.09106 1.11358 7.5115C1.42778 5.93194 2.20331 4.48103 3.34211 3.34223C4.48091 2.20343 5.93183 1.4279 7.51138 1.1137C9.09094 0.799509 10.7282 0.960765 12.2161 1.57708C13.704 2.19339 14.9758 3.23708 15.8705 4.57617C16.7653 5.91525 17.2428 7.48959 17.2428 9.1001C17.241 11.2592 16.3825 13.3293 14.8558 14.856C13.3292 16.3826 11.259 17.2411 9.09998 17.243Z" fill={getIconColor('Commission')}/>
-              <Path d="M11.9971 10.0087C11.6038 10.0087 11.2193 10.1253 10.8923 10.3438C10.5653 10.5623 10.3104 10.8729 10.1599 11.2362C10.0094 11.5996 9.97003 11.9994 10.0468 12.3852C10.1235 12.7709 10.3129 13.1253 10.591 13.4034C10.8691 13.6815 11.2234 13.8709 11.6092 13.9476C11.9949 14.0243 12.3947 13.9849 12.7581 13.8344C13.1215 13.6839 13.432 13.429 13.6506 13.102C13.8691 12.775 13.9857 12.3905 13.9857 11.9972C13.9857 11.4698 13.7762 10.964 13.4033 10.5911C13.0303 10.2182 12.5245 10.0087 11.9971 10.0087ZM11.9971 13.1287C11.7733 13.1287 11.5546 13.0623 11.3685 12.938C11.1825 12.8137 11.0375 12.637 10.9518 12.4302C10.8662 12.2235 10.8438 11.996 10.8874 11.7765C10.9311 11.557 11.0388 11.3554 11.1971 11.1972C11.3553 11.039 11.5569 10.9312 11.7764 10.8875C11.9959 10.8439 12.2234 10.8663 12.4301 10.9519C12.6368 11.0376 12.8135 11.1826 12.9379 11.3687C13.0622 11.5547 13.1285 11.7735 13.1285 11.9972C13.1285 12.2973 13.0093 12.5851 12.7972 12.7973C12.585 13.0095 12.2972 13.1287 11.9971 13.1287ZM8.19141 6.20295C8.19141 5.80965 8.07478 5.42518 7.85627 5.09816C7.63776 4.77114 7.32719 4.51626 6.96383 4.36575C6.60046 4.21524 6.20063 4.17586 5.81488 4.25259C5.42914 4.32932 5.07481 4.51871 4.7967 4.79682C4.5186 5.07493 4.3292 5.42926 4.25247 5.815C4.17574 6.20075 4.21512 6.60058 4.36563 6.96395C4.51615 7.32731 4.77103 7.63788 5.09804 7.85639C5.42506 8.0749 5.80953 8.19152 6.20283 8.19152C6.73024 8.19152 7.23604 7.98201 7.60897 7.60908C7.9819 7.23616 8.19141 6.73035 8.19141 6.20295ZM5.07141 6.20295C5.07141 5.97918 5.13776 5.76043 5.26209 5.57436C5.38641 5.3883 5.56312 5.24329 5.76986 5.15765C5.9766 5.07201 6.20409 5.04961 6.42357 5.09326C6.64304 5.13692 6.84464 5.24468 7.00288 5.40291C7.16111 5.56115 7.26887 5.76275 7.31252 5.98222C7.35618 6.2017 7.33377 6.42919 7.24814 6.63593C7.1625 6.84267 7.01749 7.01938 6.83142 7.1437C6.64536 7.26802 6.42661 7.33438 6.20283 7.33438C5.90276 7.33438 5.61498 7.21518 5.40279 7.00299C5.19061 6.79081 5.07141 6.50303 5.07141 6.20295ZM13.1903 5.00981C13.1507 4.97 13.1037 4.93841 13.052 4.91685C13.0002 4.89529 12.9446 4.88419 12.8885 4.88419C12.8325 4.88419 12.7769 4.89529 12.7251 4.91685C12.6734 4.93841 12.6264 4.97 12.5868 5.00981L5.00969 12.587C4.96989 12.6265 4.93829 12.6735 4.91673 12.7253C4.89517 12.777 4.88407 12.8326 4.88407 12.8887C4.88407 12.9448 4.89517 13.0003 4.91673 13.0521C4.93829 13.1039 4.96989 13.1509 5.00969 13.1904C5.04897 13.2306 5.0959 13.2626 5.14772 13.2844C5.19953 13.3062 5.25518 13.3175 5.31141 13.3175C5.36763 13.3175 5.42328 13.3062 5.4751 13.2844C5.52691 13.2626 5.57384 13.2306 5.61312 13.1904L13.1903 5.61324C13.2301 5.57372 13.2617 5.52672 13.2832 5.47494C13.3048 5.42315 13.3159 5.36762 13.3159 5.31152C13.3159 5.25543 13.3048 5.1999 13.2832 5.14811C13.2617 5.09633 13.2301 5.04933 13.1903 5.00981Z" stroke={getIconColor('Commission')} strokeWidth="0.2"/>
-              <Path d="M9.09998 0.100098C7.31995 0.100098 5.57989 0.627938 4.09985 1.61687C2.6198 2.6058 1.46625 4.01141 0.785064 5.65595C0.103875 7.30048 -0.0743549 9.11008 0.272912 10.8559C0.620179 12.6017 1.47735 14.2054 2.73602 15.4641C3.99469 16.7227 5.59834 17.5799 7.34416 17.9272C9.08999 18.2744 10.8996 18.0962 12.5441 17.415C14.1887 16.7338 15.5943 15.5803 16.5832 14.1002C17.5721 12.6202 18.1 10.8801 18.1 9.1001C18.0963 6.71426 17.147 4.42718 15.4599 2.74014C13.7729 1.0531 11.4858 0.103725 9.09998 0.100098ZM9.09998 17.243C7.48947 17.243 5.91513 16.7654 4.57605 15.8706C3.23696 14.9759 2.19327 13.7041 1.57696 12.2162C0.960647 10.7283 0.799391 9.09106 1.11358 7.5115C1.42778 5.93194 2.20331 4.48103 3.34211 3.34223C4.48091 2.20343 5.93183 1.4279 7.51138 1.1137C9.09094 0.799509 10.7282 0.960765 12.2161 1.57708C13.704 2.19339 14.9758 3.23708 15.8705 4.57617C16.7653 5.91525 17.2428 7.48959 17.2428 9.1001C17.241 11.2592 16.3825 13.3293 14.8558 14.856C13.3292 16.3826 11.259 17.2411 9.09998 17.243Z" stroke={getIconColor('Commission')} strokeWidth="0.2"/>
+
+          {/* Icone Carteira Digital */}
+          <TouchableOpacity onPress={() => handleNavigation('Wallet')}>
+            <Svg width="20" height="18" viewBox="0 0 512 512" fill="none" style={styles.bottomNavIcon}>
+              <Path d="M448 160V64C448 46.4 434.4 32 416 32H64C28.8 32 0 57.6 0 96V416C0 451.2 28.8 480 64 480H448C465.6 480 480 465.6 480 448V192C480 174.4 465.6 160 448 160ZM64 64H416V160H64C46.4 160 32 145.6 32 128C32 110.4 46.4 96 64 96V64ZM448 448H64C46.4 448 32 433.6 32 416V188.8C41.6 188.8 54.4 192 64 192H448V448Z" fill={getIconColor('Wallet')}/>
+              <Path d="M400 288C386.7 288 376 298.7 376 312C376 325.3 386.7 336 400 336C413.3 336 424 325.3 424 312C424 298.7 413.3 288 400 288Z" fill={getIconColor('Wallet')}/>
             </Svg>
           </TouchableOpacity>
         </View>
-        
-        {/* Botão Central - Vendas */}
-        <TouchableOpacity 
+
+        {/* Botao central hexagonal de vendas */}
+        <TouchableOpacity
           style={styles.centerButton}
           onPress={() => handleNavigation('Sales')}
         >
@@ -152,52 +160,64 @@ const BottomMenu: React.FC<BottomMenuProps> = ({ activeScreen = 'Products', curr
   );
 };
 
+// Estilos do menu inferior
 const styles = StyleSheet.create({
+  // Container principal do menu inferior
   bottomNavigation: {
-    backgroundColor: '#fcfcfc',
-    height: Layout.bottomMenuHeight,
-    width: '100%',
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 1000,
-    elevation: 1000,
+    backgroundColor: '#fcfcfc', //..Fundo branco
+    height: Layout.bottomMenuHeight, //..Altura padrao do menu
+    width: '100%', //................Largura total
+    position: 'absolute', //.........Posicao absoluta
+    left: 0, //......................Alinhado a esquerda
+    right: 0, //.....................Alinhado a direita
+    bottom: 0, //...................Fixo na base
+    zIndex: 1000, //................Acima de tudo
+    elevation: 1000, //..............Elevacao android
   },
+
+  // Curva decorativa superior
   bottomNavCurve: {
-    height: 30,
-    backgroundColor: '#f4f4f4',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    height: 30, //..................Altura da curva
+    backgroundColor: '#f4f4f4', //..Fundo cinza claro
+    borderTopLeftRadius: 20, //.....Arredondamento esquerdo
+    borderTopRightRadius: 20, //....Arredondamento direito
   },
+
+  // Conteudo dos icones do menu
   bottomNavContent: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    paddingHorizontal: 27,
-    paddingTop: 15,
-    gap: 88,
-    position: 'relative',
+    flexDirection: 'row', //........Layout horizontal
+    alignItems: 'flex-end', //......Alinha na base
+    justifyContent: 'center', //....Centraliza horizontal
+    paddingHorizontal: 27, //......Espaco lateral
+    paddingTop: 15, //..............Espaco superior
+    gap: 88, //.....................Espaco entre grupos
+    position: 'relative', //........Referencia para botao central
   },
+
+  // Grupo lateral de icones
   bottomNavSide: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    width: 130,
+    flexDirection: 'row', //........Layout horizontal
+    alignItems: 'flex-end', //......Alinha na base
+    justifyContent: 'space-between', //..Distribui igualmente
+    width: 130, //..................Largura do grupo
   },
+
+  // Icone individual do menu
   bottomNavIcon: {
-    width: 50,
-    height: 25,
+    width: 50, //..Largura do icone
+    height: 25, //..Altura do icone
   },
+
+  // Botao central hexagonal de vendas
   centerButton: {
-    position: 'absolute',
-    top: -23,
-    left: '50%',
-    marginLeft: -30,
-    width: 60,
-    height: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
+    position: 'absolute', //..Posicao absoluta
+    top: -23, //..............Eleva acima do menu
+    left: '50%', //...........Centraliza horizontal
+    marginLeft: -30, //......Ajuste de offset
+    width: 60, //.............Largura do botao
+    height: 60, //............Altura do botao
+    justifyContent: 'center', //..Centraliza vertical
+    alignItems: 'center', //......Centraliza horizontal
   },
 });
 

@@ -33,6 +33,11 @@ import TrainingDetailScreen from '../screens/14.Training/05.Training-DetailScree
 import ProductDetailScreen from '../screens/14.Training/06.Training-ProductDetailScreen';
 import TrainingPlayerScreen from '../screens/14.Training/07.Training-PlayerScreen';
 import CommercialScreen from '../screens/15.Commercial/00.CommercialScreen';
+import WalletHomeScreen from '../screens/16.CarteiraDigital/01.WalletHomeScreen';
+import WithdrawScreen from '../screens/16.CarteiraDigital/09.WithdrawScreen01';
+import AnticipateScreen from '../screens/16.CarteiraDigital/20.AnticipateScreen01';
+import ReconciliationScreen from '../screens/16.CarteiraDigital/27.ReconciliationScreen01';
+
 import LeadLolaSwipeContainer from '../screens/15.Commercial/components/Chat/10.00.LeadLolaSwipeContainer';
 import CameraScreen from '../screens/15.Commercial/components/Chat/camera/CameraScreen';
 import PhotoPreviewScreen from '../screens/15.Commercial/components/Chat/camera/PhotoPreviewScreen';
@@ -72,6 +77,10 @@ export const AppNavigator: React.FC = () => {
   return (
     <NavigationContainer
       ref={navigationRef}
+	  documentTitle={{
+        formatter: (options, route) => 
+          `Partners - ${options?.title ?? route?.name ?? 'Partners'}`,
+      }}	  
       linking={{
         prefixes: [
           'https://partners.app',
@@ -79,6 +88,7 @@ export const AppNavigator: React.FC = () => {
           'http://localhost:8081',
           'http://localhost:19006',
           'http://localhost:19000',
+          'http://localhost:22222',
         ],
         config: {
           screens: {
@@ -479,6 +489,42 @@ export const AppNavigator: React.FC = () => {
           }}
         >
           {() => <CommercialScreen />}
+        </Stack.Screen>
+        {/* Rota Carteira Digital */}
+        <Stack.Screen
+          name={ScreenNames.WalletHome}
+          options={{
+            animationTypeForReplace: 'push',
+          }}
+        >
+          {() => <WalletHomeScreen />}
+        </Stack.Screen>
+        {/* Rota Resgate de Saldo */}
+        <Stack.Screen
+          name={ScreenNames.WalletWithdraw}
+          options={{
+            animationTypeForReplace: 'push',
+          }}
+        >
+          {() => <WithdrawScreen />}
+        </Stack.Screen>
+        {/* Rota Antecipacao de Recebiveis */}
+        <Stack.Screen
+          name={ScreenNames.WalletAnticipate}
+          options={{
+            animationTypeForReplace: 'push',
+          }}
+        >
+          {() => <AnticipateScreen />}
+        </Stack.Screen>
+        {/* Rota Conciliacao da Carteira */}
+        <Stack.Screen
+          name={ScreenNames.WalletReconciliation}
+          options={{
+            animationTypeForReplace: 'push',
+          }}
+        >
+          {() => <ReconciliationScreen />}
         </Stack.Screen>
         {/* Rota Chat com Lead + Lola (Swipe) */}
         <Stack.Screen

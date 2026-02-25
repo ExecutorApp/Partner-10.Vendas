@@ -13,9 +13,12 @@ interface HeaderProps {
   calendarWeekActive?: boolean;
   onCalendarMonthPress?: () => void;
   calendarMonthActive?: boolean;
+  extraActions?: React.ReactNode;
+  hideActions?: boolean;
+  backButtonColor?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ title, notificationCount, onMenuPress, showBackButton = false, onBackPress, showAgendaIcons = false, onCalendarWeekPress, calendarWeekActive = false, onCalendarMonthPress, calendarMonthActive = false }) => {
+const Header: React.FC<HeaderProps> = ({ title, notificationCount, onMenuPress, showBackButton = false, onBackPress, showAgendaIcons = false, onCalendarWeekPress, calendarWeekActive = false, onCalendarMonthPress, calendarMonthActive = false, extraActions, hideActions = false, backButtonColor = '#3A3F51' }) => {
   return (
     <View style={styles.header}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
@@ -30,17 +33,17 @@ const Header: React.FC<HeaderProps> = ({ title, notificationCount, onMenuPress, 
         {showBackButton && (
           <TouchableOpacity onPress={onBackPress} style={styles.backButton}>
             <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <Path d="M19 12H5M12 19L5 12L12 5" stroke="#3A3F51" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <Path d="M19 12H5M12 19L5 12L12 5" stroke={backButtonColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </Svg>
           </TouchableOpacity>
         )}
         
         <View style={[styles.titleContainer, showBackButton && styles.titleWithBack]}>
-          <Text style={styles.headerTitle}>{title}</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>{title}</Text>
         </View>
         
-        <View style={[styles.headerActions, showAgendaIcons && styles.headerActionsWide]}>
-          {/* Ícones adicionais: exibidos somente quando showAgendaIcons=true */}
+        <View style={[styles.headerActions, showAgendaIcons && styles.headerActionsWide, extraActions ? styles.headerActionsWithExtra : null]}>
+          {/* Icones adicionais: exibidos somente quando showAgendaIcons=true */}
           {showAgendaIcons && (
             <>
               <TouchableOpacity style={styles.calendarIconWrapper} onPress={onCalendarWeekPress} activeOpacity={0.7}>
@@ -58,21 +61,24 @@ const Header: React.FC<HeaderProps> = ({ title, notificationCount, onMenuPress, 
             </>
           )}
 
-          <View style={styles.notificationContainer}>
-            <View style={styles.bellIcon}>
-              <Svg width={22} height={26} viewBox="0 0 22 26" fill="none">
-                <Path d="M14.3895 20.1344V21.0575C14.3895 22.0368 14.0067 22.976 13.3254 23.6685C12.644 24.361 11.7198 24.75 10.7562 24.75C9.79263 24.75 8.86849 24.361 8.18711 23.6685C7.50574 22.976 7.12295 22.0368 7.12295 21.0575V20.1344M20.5025 18.2563C19.0446 16.4429 18.0154 15.5198 18.0154 10.5206C18.0154 5.94251 15.715 4.31149 13.8218 3.51934C13.5703 3.41434 13.3335 3.17317 13.2569 2.91066C12.9248 1.76196 11.9938 0.75 10.7562 0.75C9.51858 0.75 8.58699 1.76254 8.25829 2.91182C8.18165 3.17721 7.94492 3.41434 7.69343 3.51934C5.79788 4.31264 3.49982 5.9379 3.49982 10.5206C3.49699 15.5198 2.46775 16.4429 1.00989 18.2563C0.405857 19.0075 0.934954 20.1354 1.99144 20.1354H19.5266C20.5774 20.1354 21.1031 19.004 20.5025 18.2563Z" stroke="#3A3F51" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"/>
-              </Svg>
-            </View>
-            {notificationCount > 0 && (
-              <View style={styles.notificationBadge}>
-                <View style={styles.badgeCircle}>
-                  <Text style={styles.badgeText}>{notificationCount}</Text>
+          {extraActions}
+          {!hideActions && (
+              <View style={styles.notificationContainer}>
+                <View style={styles.bellIcon}>
+                  <Svg width={22} height={26} viewBox="0 0 22 26" fill="none">
+                    <Path d="M14.3895 20.1344V21.0575C14.3895 22.0368 14.0067 22.976 13.3254 23.6685C12.644 24.361 11.7198 24.75 10.7562 24.75C9.79263 24.75 8.86849 24.361 8.18711 23.6685C7.50574 22.976 7.12295 22.0368 7.12295 21.0575V20.1344M20.5025 18.2563C19.0446 16.4429 18.0154 15.5198 18.0154 10.5206C18.0154 5.94251 15.715 4.31149 13.8218 3.51934C13.5703 3.41434 13.3335 3.17317 13.2569 2.91066C12.9248 1.76196 11.9938 0.75 10.7562 0.75C9.51858 0.75 8.58699 1.76254 8.25829 2.91182C8.18165 3.17721 7.94492 3.41434 7.69343 3.51934C5.79788 4.31264 3.49982 5.9379 3.49982 10.5206C3.49699 15.5198 2.46775 16.4429 1.00989 18.2563C0.405857 19.0075 0.934954 20.1354 1.99144 20.1354H19.5266C20.5774 20.1354 21.1031 19.004 20.5025 18.2563Z" stroke="#3A3F51" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round"/>
+                  </Svg>
                 </View>
+                {notificationCount > 0 && (
+                  <View style={styles.notificationBadge}>
+                    <View style={styles.badgeCircle}>
+                      <Text style={styles.badgeText}>{notificationCount}</Text>
+                    </View>
+                  </View>
+                )}
               </View>
-            )}
-          </View>
-          <TouchableOpacity 
+          )}
+          <TouchableOpacity
             style={styles.menuIcon}
             onPress={onMenuPress}
           >
@@ -120,11 +126,12 @@ const styles = StyleSheet.create({
     paddingBottom: 5,
   },
   titleContainer: {
-    paddingLeft: 16,
+    paddingLeft: 21,
     paddingRight: 126,
   },
   titleWithBack: {
     paddingLeft: 0,
+    paddingRight: 0,
     flex: 1,
   },
   backButton: {
@@ -146,6 +153,9 @@ const styles = StyleSheet.create({
   },
   headerActionsWide: {
     width: 180,
+  },
+  headerActionsWithExtra: {
+    width: 126,
   },
   calendarIconWrapper: {
     width: 26,
